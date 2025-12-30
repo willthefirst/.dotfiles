@@ -1,0 +1,52 @@
+# =============================================================================
+# .gitconfig - Base Git Configuration
+# =============================================================================
+# This is a portable base config. Work-specific settings are loaded from
+# ~/.gitconfig.work if present (managed by dotfiles-stripe overlay).
+# =============================================================================
+
+[user]
+    name = Will Moritz
+    email = willthefirst@gmail.com
+    signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4sYgYeiZBZD3CdjMI+AVW5ED2ZDSUbS1XYeMW8t4wD
+
+[init]
+    defaultBranch = main
+
+[push]
+    autoSetupRemote = true
+
+[core]
+    compression = 0
+    excludesfile = ~/.gitignore_global
+
+[gpg]
+    format = ssh
+
+[gpg "ssh"]
+    program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+
+[commit]
+    gpgsign = true
+
+# =============================================================================
+# Aliases
+# =============================================================================
+[alias]
+    # Common shortcuts
+    st = status
+    co = checkout
+    br = branch
+    ci = commit
+    # Log formatting
+    lg = log --oneline --graph --decorate
+    # Show last commit
+    last = log -1 HEAD
+
+# =============================================================================
+# Work Overlay - Include work-specific config if present
+# =============================================================================
+# This allows work dotfiles to extend/override settings (e.g., work email,
+# different signing key). The include is conditional - works without it.
+[includeIf "gitdir:~/"]
+    path = ~/.gitconfig.work
