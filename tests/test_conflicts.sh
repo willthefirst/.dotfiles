@@ -36,6 +36,7 @@ test_detects_file_conflict() {
     touch "$TEST_HOME/.zshrc"
 
     # Run conflict detection
+    local conflicts
     conflicts=$(get_package_conflicts "$TEST_DOTFILES/zsh" "$TEST_HOME")
 
     # Assert
@@ -56,6 +57,7 @@ test_detects_symlink_conflict() {
     # Create conflicting symlink pointing elsewhere
     ln -s /some/other/path "$TEST_HOME/.zshrc"
 
+    local conflicts
     conflicts=$(get_package_conflicts "$TEST_DOTFILES/zsh" "$TEST_HOME")
 
     if [[ "$conflicts" == *"symlink:$TEST_HOME/.zshrc"* ]]; then
@@ -75,6 +77,7 @@ test_no_conflict_when_correctly_linked() {
     # Create correct symlink
     ln -s "$TEST_DOTFILES/zsh/.zshrc" "$TEST_HOME/.zshrc"
 
+    local conflicts
     conflicts=$(get_package_conflicts "$TEST_DOTFILES/zsh" "$TEST_HOME")
 
     if [[ -z "$conflicts" ]]; then
@@ -91,6 +94,7 @@ test_no_conflict_when_nothing_exists() {
     setup
 
     # No file or symlink exists
+    local conflicts
     conflicts=$(get_package_conflicts "$TEST_DOTFILES/zsh" "$TEST_HOME")
 
     if [[ -z "$conflicts" ]]; then
@@ -114,6 +118,7 @@ test_detects_directory_symlink_conflict() {
     # Create conflicting symlink at .config/nvim pointing elsewhere
     ln -s /some/other/path "$TEST_HOME/.config/nvim"
 
+    local conflicts
     conflicts=$(get_package_conflicts "$TEST_DOTFILES/nvim" "$TEST_HOME")
 
     if [[ "$conflicts" == *"symlink:$TEST_HOME/.config/nvim"* ]]; then

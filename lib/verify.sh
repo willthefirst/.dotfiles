@@ -34,8 +34,7 @@ verify_installation() {
 
     # Check main symlinks
     for link in "${VERIFY_SYMLINKS[@]}"; do
-        local stow_link
-        if stow_link=$(is_stow_managed "$link"); then
+        if is_stow_managed "$link" > /dev/null; then
             base_count=$((base_count + 1))
         elif [[ -e "$link" ]]; then
             issues+=("$link exists but not managed by stow")

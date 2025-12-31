@@ -9,9 +9,11 @@ DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 WORK_DOTFILES_DIR="${WORK_DOTFILES_DIR:-$HOME/.dotfiles-stripe}"
 
 # Stow packages to deploy
+# shellcheck disable=SC2034
 PACKAGES=(zsh git nvim ssh ghostty)
 
 # Files to check for backup (these are what stow will manage)
+# shellcheck disable=SC2034
 BACKUP_FILES=(
     "$HOME/.zshrc"
     "$HOME/.gitconfig"
@@ -23,6 +25,7 @@ BACKUP_FILES=(
 )
 
 # Symlinks to verify after installation
+# shellcheck disable=SC2034
 VERIFY_SYMLINKS=(
     "$HOME/.zshrc"
     "$HOME/.gitconfig"
@@ -33,6 +36,7 @@ VERIFY_SYMLINKS=(
 )
 
 # Work overlay files to check
+# shellcheck disable=SC2034
 WORK_FILES=(
     "$HOME/.zshrc.work"
     "$HOME/.gitconfig.work"

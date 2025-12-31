@@ -233,7 +233,9 @@ EOF
 
     # Check if the deployed config has actual content (non-comment lines)
     local content_lines
-    content_lines=$(grep -v '^#' "$TEST_HOME/.config/ghostty/config" | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+    content_lines=$(grep -cv '^#' "$TEST_HOME/.config/ghostty/config" 2>/dev/null | tr -d ' ')
+    # Filter out blank lines from the count by recounting
+    content_lines=$(grep -v '^#' "$TEST_HOME/.config/ghostty/config" | grep -c -v '^[[:space:]]*$' | tr -d ' ')
 
     if [[ "$content_lines" -eq 0 ]]; then
         echo "PASS: test_config_has_content"

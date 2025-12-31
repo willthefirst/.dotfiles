@@ -32,7 +32,8 @@ needs_backup() {
 # Usage: create_backup file1 file2 ...
 create_backup() {
     local files=("$@")
-    local backup_dir="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
+    local backup_dir
+    backup_dir="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
 
     if ! needs_backup "${files[@]}"; then
         return 0
@@ -60,7 +61,8 @@ create_backup() {
             fi
 
             if $should_backup; then
-                local backup_path="$backup_dir/$(basename "$file")"
+                local backup_path
+                backup_path="$backup_dir/$(basename "$file")"
                 if [[ -L "$file" ]]; then
                     log_info "  Backing up symlink: $file -> $backup_path"
                     # For symlinks, copy the target content
@@ -122,8 +124,6 @@ list_backups() {
 
     log_info "Available backups:"
     echo "$backups" | while read -r backup; do
-        local timestamp
-        timestamp=$(basename "$backup" | sed 's/.dotfiles-backup-//')
         echo "  $backup"
     done
 }

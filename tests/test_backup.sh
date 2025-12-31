@@ -104,8 +104,8 @@ test_create_backup_creates_directory() {
     touch "$TEST_HOME/.zshrc"
     echo "test content" > "$TEST_HOME/.zshrc"
 
-    # Capture output to find backup directory
-    output=$(create_backup "$TEST_HOME/.zshrc" 2>&1)
+    # Run backup (output not needed, just side effect)
+    create_backup "$TEST_HOME/.zshrc" > /dev/null 2>&1
 
     # Check that a backup directory was created
     backup_dir=$(find "$TEST_HOME" -maxdepth 1 -type d -name ".dotfiles-backup-*" 2>/dev/null | head -1)

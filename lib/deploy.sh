@@ -86,6 +86,7 @@ deploy_base() {
     fi
 
     # Check for conflicts first (unless in force/adopt mode)
+    # shellcheck disable=SC2153
     if [[ "${FORCE_MODE:-false}" != "true" && "${ADOPT_MODE:-false}" != "true" ]]; then
         if ! check_all_conflicts "$DOTFILES_DIR" "${PACKAGES[@]}"; then
             exit 1
