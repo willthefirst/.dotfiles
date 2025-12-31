@@ -216,6 +216,57 @@ test_deploy_packages_detects_file_instead_of_directory() {
     teardown
 }
 
+test_config_has_content() {
+    setup
+
+    # Create a config with only template/comment content
+    mkdir -p "$TEST_DOTFILES/ghostty/.config/ghostty"
+    cat > "$TEST_DOTFILES/ghostty/.config/ghostty/config" <<'EOF'
+# This is the configuration file for Ghostty.
+#
+# This template file has been automatically created
+# All options are commented out
+EOF
+
+    # Deploy the package
+    deploy_packages "$TEST_DOTFILES" "ghostty" > /dev/null 2>&1
+
+    # Check if the deployed config has actual content (non-comment lines)
+    local content_lines
+    content_lines=$(grep -v '^#' "$TEST_HOME/.config/ghostty/config" | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+
+    if [[ "$content_lines" -eq 0 ]]; then
+        echo "PASS: test_config_has_content"
+    else
+        echo "FAIL: test_config_has_content"
+        echo "  Expected 0 content lines in template config, got: $content_lines"
+    fi
+
+    teardown
+}
+
+test_no_broken_symlinks_in_app_support() {
+    setup
+
+    # Create a scenario: broken symlink in "Application Support" pointing to old dotfiles location
+    local app_support="$TEST_HOME/Library/Application Support/com.test.app"
+    mkdir -p "$app_support"
+    ln -s "$TEST_HOME/.dotfiles/nonexistent-config" "$app_support/config"
+
+    # Check for broken symlinks
+    local broken_links
+    broken_links=$(find "$TEST_HOME/Library/Application Support" -type l ! -exec test -e {} \; -print 2>/dev/null | wc -l | tr -d ' ')
+
+    if [[ "$broken_links" -gt 0 ]]; then
+        echo "PASS: test_no_broken_symlinks_in_app_support"
+    else
+        echo "FAIL: test_no_broken_symlinks_in_app_support"
+        echo "  Expected to detect broken symlinks, found: $broken_links"
+    fi
+
+    teardown
+}
+
 # Run all tests
 test_create_directories_creates_config
 test_create_directories_creates_ssh_sockets
@@ -226,3 +277,5 @@ test_is_stow_managed_detects_parent_symlink
 test_deploy_packages_handles_nested_config
 test_deploy_packages_warns_on_missing_package
 test_deploy_packages_detects_file_instead_of_directory
+test_config_has_content
+test_no_broken_symlinks_in_app_support

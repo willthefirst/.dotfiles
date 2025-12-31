@@ -162,7 +162,7 @@ make help           # Show all available commands
 make install        # Install dotfiles
 make install-force  # Install, removing conflicts
 make install-adopt  # Install, adopting existing files
-make test           # Run test suite (16 tests)
+make test           # Run test suite (21 tests)
 make lint           # Run ShellCheck on all scripts
 make validate       # Validate config files
 make clean          # Remove backups older than 7 days
@@ -223,7 +223,7 @@ graph TD
 
 ### Running Tests
 
-The test suite includes 16 tests covering conflict detection, backup logic, and deployment:
+The test suite includes 21 tests covering conflict detection, backup logic, and deployment:
 
 ```bash
 # Run all tests
@@ -239,7 +239,7 @@ make test
 |--------|-------|----------|
 | conflicts.sh | 5 | File conflicts, symlink conflicts, directory conflicts |
 | backup.sh | 5 | Needs backup detection, backup creation, stow-managed detection |
-| deploy.sh | 6 | Directory creation, permissions, stow deployment, verification |
+| deploy.sh | 11 | Directory creation, permissions, stow deployment, verification, config content validation, broken symlink detection |
 
 ### Linting
 
@@ -331,14 +331,21 @@ rm ~/.config/nvim/lua/plugins-work
 ## Adding New Configs
 
 1. Create package directory: `mkdir -p ~/.dotfiles/newapp`
-2. Add config with correct path structure:
+2. **Find and copy your actual config** (don't just create empty files):
    ```bash
+   # First, find where the app currently stores its config
+   find ~ ~/Library -name "*newapp*config*" 2>/dev/null
+
+   # Copy the ACTUAL config content (not default templates)
    # For ~/.newapprc
-   touch ~/.dotfiles/newapp/.newapprc
+   cp ~/.newapprc ~/.dotfiles/newapp/.newapprc
 
    # For ~/.config/newapp/config
    mkdir -p ~/.dotfiles/newapp/.config/newapp
-   touch ~/.dotfiles/newapp/.config/newapp/config
+   cp ~/.config/newapp/config ~/.dotfiles/newapp/.config/newapp/config
+
+   # Some apps use macOS-specific paths - check those too
+   # Example: ~/Library/Application Support/com.app.name/config
    ```
 3. Add to `PACKAGES` array in `lib/config.sh`
 4. Deploy: `./install.sh` or `stow -v -t ~ newapp`
@@ -439,6 +446,33 @@ ls -la ~/.zshrc.work
 # Check if base config sources it
 grep "zshrc.work" ~/.zshrc
 ```
+
+### Application not loading config preferences
+
+Some applications check multiple config locations with different precedence. If your stowed config isn't working:
+
+```bash
+# Check where the app actually reads config from
+# Example for ghostty:
+ghostty +show-config | head -10
+
+# Look for broken symlinks in app-specific directories
+find ~/Library/Application\ Support -type l ! -exec test -e {} \; -print 2>/dev/null
+
+# Common macOS app config locations (in addition to XDG paths):
+# ~/Library/Application Support/com.app.name/config
+# ~/Library/Preferences/com.app.name.plist
+
+# Remove broken symlinks that might take precedence
+rm ~/Library/Application\ Support/com.app.name/config
+
+# Verify stow created the symlink correctly
+ls -la ~/.config/app/config
+
+# Restart the application to reload config
+```
+
+**Note**: Apps like Ghostty check both XDG (`~/.config/app/`) and macOS-specific paths. Stow uses the XDG path, so ensure there are no old configs or broken symlinks in the app-specific location taking precedence.
 
 ### SSH not working after setup
 
