@@ -49,13 +49,27 @@ sudo apt install stow
 # Clone the repository
 git clone https://github.com/willthefirst/.dotfiles.git ~/.dotfiles
 
-# Create required directories
-mkdir -p ~/.config ~/.ssh/sockets
-chmod 700 ~/.ssh ~/.ssh/sockets
-
-# Deploy all configs
+# Run the install script
 cd ~/.dotfiles
-stow -v -t ~ zsh git nvim ssh
+./install.sh
+```
+
+#### Install Script Options
+
+| Option | Description |
+|--------|-------------|
+| `--force` | Remove conflicting symlinks/files before stowing |
+| `--adopt` | Adopt existing files into stow packages (keeps current content) |
+| `--help` | Show usage information |
+
+If you have existing config files, the script will detect conflicts and show you how to resolve them:
+
+```bash
+# Automatically remove conflicting files
+./install.sh --force
+
+# Or adopt existing files into stow (preserves your current config content)
+./install.sh --adopt
 ```
 
 ### With Work Overlay
@@ -170,10 +184,18 @@ rm ~/.config/nvim/lua/plugins-work
 
 ### Stow conflicts with existing files
 
+The install script will detect conflicts and suggest solutions:
+
 ```bash
-# Backup and remove existing file
+# Option 1: Let the script remove conflicting files
+./install.sh --force
+
+# Option 2: Adopt existing files (keeps your current content)
+./install.sh --adopt
+
+# Option 3: Manually backup and remove
 mv ~/.zshrc ~/.zshrc.backup
-stow -v -t ~ zsh
+./install.sh
 ```
 
 ### Symlink not working
