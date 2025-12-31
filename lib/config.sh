@@ -15,6 +15,7 @@ PACKAGES=(zsh git nvim ssh ghostty)
 BACKUP_FILES=(
     "$HOME/.zshrc"
     "$HOME/.gitconfig"
+    "$HOME/.gitconfig.personal"
     "$HOME/.gitignore_global"
     "$HOME/.config/nvim"
     "$HOME/.ssh/config"
@@ -25,6 +26,7 @@ BACKUP_FILES=(
 VERIFY_SYMLINKS=(
     "$HOME/.zshrc"
     "$HOME/.gitconfig"
+    "$HOME/.gitconfig.personal"
     "$HOME/.config/nvim/init.lua"
     "$HOME/.ssh/config"
     "$HOME/.config/ghostty"

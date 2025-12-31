@@ -53,6 +53,7 @@ graph LR
 │   └── .zshrc              # Shell config (sources .zshrc.work)
 ├── git/
 │   ├── .gitconfig          # Git config (includes .gitconfig.work)
+│   ├── .gitconfig.personal # Personal repo signing (1Password SSH)
 │   └── .gitignore_global   # Global gitignore
 ├── nvim/
 │   └── .config/nvim/       # Neovim config (imports plugins-work/)
@@ -358,6 +359,47 @@ rm ~/.config/nvim/lua/plugins-work
 3. **Don't store secrets** - Use environment variables or secure vaults
 4. **Test changes** - Run `make test` and `make validate` before committing
 5. **Run linting** - Use `make lint` to catch shell script issues
+
+## Git Commit Signing
+
+Commit signing is configured conditionally based on repository remote URL using Git's `includeIf` directive (requires Git 2.36+).
+
+### How It Works
+
+```mermaid
+flowchart TD
+    A[git commit] --> B{Remote URL matches<br/>git@github.com:willthefirst/**?}
+    B -->|Yes| C[Load .gitconfig.personal]
+    C --> D[Sign with 1Password SSH]
+    B -->|No| E[No signing]
+```
+
+| Repository Type | Remote Pattern | Signing |
+|-----------------|----------------|---------|
+| Personal GitHub | `git@github.com:willthefirst/*` | 1Password SSH |
+| Work repos | Any other remote | Disabled |
+| New repos | No remote yet | Disabled |
+
+### Configuration Files
+
+- **`.gitconfig`**: Base config with `gpgsign = false` (default off)
+- **`.gitconfig.personal`**: Enables signing with 1Password's `op-ssh-sign`
+
+### Verifying
+
+```bash
+# In a personal repo (with matching remote)
+git config --get commit.gpgsign  # Should show: true
+
+# In a work repo (non-matching remote)
+git config --get commit.gpgsign  # Should show: false
+```
+
+### Notes
+
+- The `hasconfig:remote.*.url` conditional only activates after a remote is configured
+- New repos won't have signing enabled until you add a remote matching the pattern
+- Requires 1Password desktop app with SSH agent enabled
 
 ## Troubleshooting
 

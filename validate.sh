@@ -31,6 +31,18 @@ validate_git() {
         log_error "  [x] git/.gitconfig is invalid"
         ((errors++)) || true
     fi
+
+    # Validate personal git config (1Password signing)
+    if [[ -f "$SCRIPT_DIR/git/.gitconfig.personal" ]]; then
+        if git config --file "$SCRIPT_DIR/git/.gitconfig.personal" --list > /dev/null 2>&1; then
+            log_info "  [ok] git/.gitconfig.personal valid"
+        else
+            log_error "  [x] git/.gitconfig.personal is invalid"
+            ((errors++)) || true
+        fi
+    else
+        log_warn "  [!] git/.gitconfig.personal not found"
+    fi
 }
 
 validate_ssh() {

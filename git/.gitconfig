@@ -23,12 +23,14 @@
 [gpg]
     format = ssh
 
-# Note: For 1Password SSH signing on macOS, add to ~/.gitconfig.work:
-#   [gpg "ssh"]
-#       program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
-
 [commit]
-    gpgsign = true
+    gpgsign = false
+
+# =============================================================================
+# Personal Repos - Enable 1Password SSH signing for personal GitHub repos
+# =============================================================================
+[includeIf "hasconfig:remote.*.url:git@github.com:willthefirst/**"]
+    path = ~/.gitconfig.personal
 
 # =============================================================================
 # Aliases
