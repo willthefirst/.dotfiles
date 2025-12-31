@@ -156,6 +156,66 @@ test_is_stow_managed_detects_parent_symlink() {
     teardown
 }
 
+test_deploy_packages_handles_nested_config() {
+    setup
+
+    # Create a package with nested .config structure (like ghostty)
+    mkdir -p "$TEST_DOTFILES/ghostty/.config/ghostty"
+    echo "# test ghostty config" > "$TEST_DOTFILES/ghostty/.config/ghostty/config"
+
+    # Deploy the package
+    if deploy_packages "$TEST_DOTFILES" "ghostty" > /dev/null 2>&1; then
+        if [[ -L "$TEST_HOME/.config/ghostty" ]]; then
+            echo "PASS: test_deploy_packages_handles_nested_config"
+        else
+            echo "FAIL: test_deploy_packages_handles_nested_config"
+            echo "  Expected .config/ghostty symlink to be created"
+        fi
+    else
+        echo "FAIL: test_deploy_packages_handles_nested_config"
+        echo "  deploy_packages failed"
+    fi
+
+    teardown
+}
+
+test_deploy_packages_warns_on_missing_package() {
+    setup
+
+    # Try to deploy a non-existent package
+    local output
+    output=$(deploy_packages "$TEST_DOTFILES" "nonexistent" 2>&1)
+
+    if echo "$output" | grep -q "Package not found"; then
+        echo "PASS: test_deploy_packages_warns_on_missing_package"
+    else
+        echo "FAIL: test_deploy_packages_warns_on_missing_package"
+        echo "  Expected warning about missing package"
+    fi
+
+    teardown
+}
+
+test_deploy_packages_detects_file_instead_of_directory() {
+    setup
+
+    # Create a file where a directory should be
+    echo "# misconfigured" > "$TEST_DOTFILES/ghostty-config"
+
+    # Try to deploy it
+    local output
+    output=$(deploy_packages "$TEST_DOTFILES" "ghostty-config" 2>&1)
+
+    if echo "$output" | grep -q "Package not found"; then
+        echo "PASS: test_deploy_packages_detects_file_instead_of_directory"
+    else
+        echo "FAIL: test_deploy_packages_detects_file_instead_of_directory"
+        echo "  Expected warning about file vs directory"
+    fi
+
+    teardown
+}
+
 # Run all tests
 test_create_directories_creates_config
 test_create_directories_creates_ssh_sockets
@@ -163,3 +223,6 @@ test_create_directories_sets_ssh_permissions
 test_deploy_packages_creates_symlinks
 test_is_stow_managed_detects_direct_symlink
 test_is_stow_managed_detects_parent_symlink
+test_deploy_packages_handles_nested_config
+test_deploy_packages_warns_on_missing_package
+test_deploy_packages_detects_file_instead_of_directory

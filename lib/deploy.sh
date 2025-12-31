@@ -52,7 +52,17 @@ deploy_packages() {
             # Show non-LINK output if any
             echo "$stow_output" | grep -v "^LINK:" || true
         else
-            log_warn "  Package not found: $pkg"
+            # Check if there's a similar file/directory that might be misplaced
+            if [[ -e "$base_dir/$pkg-config" ]] || [[ -e "$base_dir/${pkg}_config" ]]; then
+                log_warn "  Package not found: $pkg"
+                log_warn "    Found similar file/directory. Stow packages must be directories"
+                log_warn "    Expected structure: $pkg/.config/$pkg/config (or similar)"
+            elif [[ -f "$base_dir/$pkg" ]]; then
+                log_warn "  Package not found: $pkg (found file, expected directory)"
+                log_warn "    For config files, use structure: $pkg/.config/$pkg/config"
+            else
+                log_warn "  Package not found: $pkg (directory doesn't exist)"
+            fi
         fi
     done
 

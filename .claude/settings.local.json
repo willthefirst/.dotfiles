@@ -6,7 +6,9 @@
       "Bash(bash -n:*)",
       "Bash(stow:*)",
       "Bash(tree:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)"
     ]
   }
 }
