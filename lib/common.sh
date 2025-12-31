@@ -51,8 +51,8 @@ print_header() {
 print_next_steps() {
     echo ""
     echo "Next steps:"
-    echo "  1. Restart your terminal or run: source ~/.zshrc"
-    echo "  2. Check git config: git config user.email"
-    echo "  3. Test SSH: ssh -T git@github.com"
+    echo "  1. source ~/.zshrc"
+    echo "  2. git config user.email"
+    echo "  3. ssh -T git@github.com"
     echo ""
 }

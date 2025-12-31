@@ -6,11 +6,11 @@
 
 # Create required directories with proper permissions
 create_directories() {
-    log_info "Creating required directories..."
     mkdir -p "$HOME/.config"
     mkdir -p "$HOME/.ssh/sockets"
     chmod 700 "$HOME/.ssh"
     chmod 700 "$HOME/.ssh/sockets"
+    echo "✓ Directories created"
 }
 
 # Check prerequisites (GNU Stow)
@@ -24,7 +24,7 @@ check_prerequisites() {
     if ! require_command "stow" "$install_hint"; then
         exit 1
     fi
-    log_info "GNU Stow found: $(command -v stow)"
+    echo "✓ GNU Stow found"
 }
 
 # Deploy packages using stow
@@ -34,6 +34,8 @@ deploy_packages() {
     shift
     local packages=("$@")
     local stow_opts=(-v -t "$HOME")
+    local stowed_pkgs=()
+    local missing_pkgs=()
 
     if [[ "${ADOPT_MODE:-false}" == "true" ]]; then
         stow_opts+=(--adopt)
@@ -42,32 +44,32 @@ deploy_packages() {
 
     for pkg in "${packages[@]}"; do
         if [[ -d "$base_dir/$pkg" ]]; then
-            log_info "  Stowing: $pkg"
             local stow_output
             if ! stow_output=$(cd "$base_dir" && stow "${stow_opts[@]}" "$pkg" 2>&1); then
-                log_error "  Failed to stow: $pkg"
+                echo -e "  ${RED}✗${NC} Failed to stow: $pkg"
                 local error_output
                 error_output=$(echo "$stow_output" | grep -v "^LINK:")
                 [[ -n "$error_output" ]] && echo "$error_output"
                 return 1
             fi
+            stowed_pkgs+=("$pkg")
             # Show non-LINK output if any
             local filtered_output
             filtered_output=$(echo "$stow_output" | grep -v "^LINK:")
             [[ -n "$filtered_output" ]] && echo "$filtered_output"
         else
-            # Check if there's a similar file/directory that might be misplaced
-            if [[ -e "$base_dir/$pkg-config" ]] || [[ -e "$base_dir/${pkg}_config" ]]; then
-                log_warn "  Package not found: $pkg"
-                log_warn "    Found similar file/directory. Stow packages must be directories"
-                log_warn "    Expected structure: $pkg/.config/$pkg/config (or similar)"
-            elif [[ -f "$base_dir/$pkg" ]]; then
-                log_warn "  Package not found: $pkg (found file, expected directory)"
-                log_warn "    For config files, use structure: $pkg/.config/$pkg/config"
-            else
-                log_warn "  Package not found: $pkg (directory doesn't exist)"
-            fi
+            missing_pkgs+=("$pkg")
         fi
+    done
+
+    # Show summary
+    if [[ ${#stowed_pkgs[@]} -gt 0 ]]; then
+        echo "  Stowing: ${stowed_pkgs[*]}"
+    fi
+
+    # Show missing packages
+    for pkg in "${missing_pkgs[@]}"; do
+        echo -e "  ${YELLOW}⚠${NC} Package not found: $pkg"
     done
 
     return 0
@@ -75,7 +77,8 @@ deploy_packages() {
 
 # Deploy base dotfiles
 deploy_base() {
-    log_info "Deploying base dotfiles from $DOTFILES_DIR..."
+    echo ""
+    echo "Deploying base dotfiles..."
 
     if [[ ! -d "$DOTFILES_DIR" ]]; then
         log_error "Cannot access $DOTFILES_DIR"
@@ -91,7 +94,6 @@ deploy_base() {
 
     # Handle conflicts if in force mode
     if [[ "${FORCE_MODE:-false}" == "true" ]]; then
-        log_info "Force mode: removing conflicting files..."
         handle_conflicts "$DOTFILES_DIR" "${PACKAGES[@]}"
     fi
 
@@ -104,7 +106,8 @@ deploy_base() {
 # Deploy work overlay (if present)
 deploy_work() {
     if [[ -d "$WORK_DOTFILES_DIR" ]]; then
-        log_info "Deploying work overlay from $WORK_DOTFILES_DIR..."
+        echo ""
+        echo "Deploying work overlay..."
 
         # Check for conflicts (work overlay adds files, shouldn't conflict much)
         if [[ "${FORCE_MODE:-false}" != "true" && "${ADOPT_MODE:-false}" != "true" ]]; then
@@ -123,10 +126,5 @@ deploy_work() {
         if ! deploy_packages "$WORK_DOTFILES_DIR" "${PACKAGES[@]}"; then
             return 1
         fi
-    else
-        log_info "Work dotfiles not found at $WORK_DOTFILES_DIR (skipping)"
-        log_info "To install work overlay later:"
-        log_info "  git clone <work-repo-url> $WORK_DOTFILES_DIR"
-        log_info "  cd $WORK_DOTFILES_DIR && stow -v -t ~ zsh git nvim ssh"
     fi
 }

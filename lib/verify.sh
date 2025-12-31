@@ -27,44 +27,43 @@ is_stow_managed() {
 
 # Verify all symlinks are properly installed
 verify_installation() {
-    echo ""
-    log_info "Verifying installation..."
-
     local all_good=true
+    local base_count=0
+    local work_count=0
+    local issues=()
 
     # Check main symlinks
     for link in "${VERIFY_SYMLINKS[@]}"; do
         local stow_link
         if stow_link=$(is_stow_managed "$link"); then
-            if [[ "$stow_link" == "$link" ]]; then
-                echo -e "  ${GREEN}[ok]${NC} $link -> $(readlink "$link")"
-            else
-                echo -e "  ${GREEN}[ok]${NC} $link (via $stow_link)"
-            fi
+            base_count=$((base_count + 1))
         elif [[ -e "$link" ]]; then
-            echo -e "  ${YELLOW}[!]${NC} $link (exists but not managed by stow)"
+            issues+=("$link exists but not managed by stow")
             all_good=false
         else
-            echo -e "  ${RED}[x]${NC} $link (not found)"
+            issues+=("$link not found")
             all_good=false
         fi
     done
 
     # Check work overlay files
-    echo ""
-    log_info "Work overlay status:"
     for file in "${WORK_FILES[@]}"; do
         if [[ -e "$file" ]]; then
-            echo -e "  ${GREEN}[ok]${NC} $file"
-        else
-            echo -e "  ${YELLOW}[o]${NC} $file (not installed)"
+            work_count=$((work_count + 1))
         fi
     done
 
     echo ""
     if $all_good && [[ "${INSTALL_WARNINGS:-false}" != "true" ]]; then
-        log_info "Installation complete!"
+        if [[ $work_count -gt 0 ]]; then
+            echo "✓ Installation verified ($base_count base configs, $work_count work configs)"
+        else
+            echo "✓ Installation verified ($base_count configs)"
+        fi
     else
-        log_warn "Installation complete with warnings. Check output above."
+        echo -e "${YELLOW}⚠${NC} Installation complete with warnings:"
+        for issue in "${issues[@]}"; do
+            echo "  - $issue"
+        done
     fi
 }

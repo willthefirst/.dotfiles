@@ -215,16 +215,17 @@ handle_conflicts() {
                 $already_removed && continue
 
                 if [[ "${FORCE_MODE:-false}" == "true" ]]; then
+                    local short_path="${path#"$HOME/"}"
                     if [[ -L "$path" ]]; then
-                        log_info "  Removing symlink: $path"
+                        echo "  Removing conflict: ~/$short_path"
                         rm "$path"
                         removed_paths+=("$path")
                     elif [[ -d "$path" ]]; then
-                        log_info "  Removing directory: $path"
+                        echo "  Removing conflict: ~/$short_path"
                         rm -rf "$path"
                         removed_paths+=("$path")
                     elif [[ -f "$path" ]]; then
-                        log_info "  Removing file: $path"
+                        echo "  Removing conflict: ~/$short_path"
                         rm "$path"
                         removed_paths+=("$path")
                     fi
