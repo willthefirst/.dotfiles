@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./install.sh:*)"
+      "Bash(./install.sh:*)",
+      "Bash(cat:*)",
+      "Bash(bash -n:*)",
+      "Bash(stow:*)",
+      "Bash(tree:*)",
+      "Bash(chmod:*)"
     ]
   }
 }
