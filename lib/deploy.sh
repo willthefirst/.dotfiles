@@ -46,11 +46,15 @@ deploy_packages() {
             local stow_output
             if ! stow_output=$(cd "$base_dir" && stow "${stow_opts[@]}" "$pkg" 2>&1); then
                 log_error "  Failed to stow: $pkg"
-                echo "$stow_output" | grep -v "^LINK:" || true
+                local error_output
+                error_output=$(echo "$stow_output" | grep -v "^LINK:")
+                [[ -n "$error_output" ]] && echo "$error_output"
                 return 1
             fi
             # Show non-LINK output if any
-            echo "$stow_output" | grep -v "^LINK:" || true
+            local filtered_output
+            filtered_output=$(echo "$stow_output" | grep -v "^LINK:")
+            [[ -n "$filtered_output" ]] && echo "$filtered_output"
         else
             # Check if there's a similar file/directory that might be misplaced
             if [[ -e "$base_dir/$pkg-config" ]] || [[ -e "$base_dir/${pkg}_config" ]]; then
