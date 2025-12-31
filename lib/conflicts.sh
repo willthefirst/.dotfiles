@@ -49,28 +49,33 @@ get_package_conflicts() {
                 conflicts+=("file:$target_path")
             fi
         else
-            # It's a file - check if any parent directory is a bad symlink
+            # It's a file - check if any parent directory is a symlink
             local parent_path="$target_path"
             local parent_conflict=false
+            local parent_is_managed=false
             while [[ "$parent_path" != "$target_dir" ]]; do
                 parent_path=$(dirname "$parent_path")
                 if [[ -L "$parent_path" ]]; then
-                    # Parent is a symlink - check if it's already reported
-                    for checked in "${checked_dirs[@]}"; do
-                        if [[ "$parent_path" == "$checked" ]]; then
-                            parent_conflict=true
-                            break
-                        fi
-                    done
-                    if ! $parent_conflict; then
-                        local parent_rel="${parent_path#"$target_dir"/}"
-                        local expected_parent="$pkg_dir/$parent_rel"
-                        local actual_parent
-                        actual_parent=$(readlink -f "$parent_path" 2>/dev/null || echo "")
-                        local expected_parent_resolved
-                        expected_parent_resolved=$(readlink -f "$expected_parent" 2>/dev/null || echo "$expected_parent")
+                    # Parent is a symlink - check if it's correctly managed by stow
+                    local parent_rel="${parent_path#"$target_dir"/}"
+                    local expected_parent="$pkg_dir/$parent_rel"
+                    local actual_parent
+                    actual_parent=$(readlink -f "$parent_path" 2>/dev/null || echo "")
+                    local expected_parent_resolved
+                    expected_parent_resolved=$(readlink -f "$expected_parent" 2>/dev/null || echo "$expected_parent")
 
-                        if [[ "$actual_parent" != "$expected_parent_resolved" ]]; then
+                    if [[ "$actual_parent" == "$expected_parent_resolved" ]]; then
+                        # Parent symlink is correct - file is already managed
+                        parent_is_managed=true
+                    else
+                        # Parent symlink points elsewhere - check if already reported
+                        for checked in "${checked_dirs[@]}"; do
+                            if [[ "$parent_path" == "$checked" ]]; then
+                                parent_conflict=true
+                                break
+                            fi
+                        done
+                        if ! $parent_conflict; then
                             conflicts+=("symlink:$parent_path:$(readlink "$parent_path")")
                             checked_dirs+=("$parent_path")
                             parent_conflict=true
@@ -80,8 +85,8 @@ get_package_conflicts() {
                 fi
             done
 
-            # Only check the file itself if no parent conflict
-            if ! $parent_conflict; then
+            # Only check the file itself if no parent conflict and not already managed
+            if ! $parent_conflict && ! $parent_is_managed; then
                 if [[ -L "$target_path" ]]; then
                     local expected_target="$pkg_dir/$rel_path"
                     local actual_target

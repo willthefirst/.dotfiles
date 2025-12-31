@@ -27,7 +27,7 @@ VERIFY_SYMLINKS=(
     "$HOME/.gitconfig"
     "$HOME/.config/nvim/init.lua"
     "$HOME/.ssh/config"
-    "$HOME/.config/ghostty/config"
+    "$HOME/.config/ghostty"
 )
 
 # Work overlay files to check
