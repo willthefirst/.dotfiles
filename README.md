@@ -6,31 +6,60 @@ Personal dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
 This repository contains portable, base configuration files. Work-specific settings are loaded from a separate overlay repository (`~/.dotfiles-stripe`) when present, keeping this config clean and shareable.
 
-### Include/Source Pattern
+```mermaid
+graph LR
+    subgraph "Base Dotfiles (~/.dotfiles)"
+        A[.zshrc]
+        B[.gitconfig]
+        C[.ssh/config]
+        D[nvim config]
+    end
 
-```
-~/.zshrc          ─── sources ───▶  ~/.zshrc.work (if exists)
-~/.gitconfig      ─── includes ──▶  ~/.gitconfig.work (if exists)
-~/.ssh/config     ─── includes ──▶  ~/.ssh/config.work (if exists)
-nvim/lazy.lua     ─── imports ───▶  plugins-work/ (if exists)
+    subgraph "Work Overlay (~/.dotfiles-stripe)"
+        E[.zshrc.work]
+        F[.gitconfig.work]
+        G[.ssh/config.work]
+        H[plugins-work/]
+    end
+
+    A -->|sources| E
+    B -->|includes| F
+    C -->|includes| G
+    D -->|imports| H
 ```
 
 ## Structure
 
 ```
 ~/.dotfiles/
+├── install.sh              # Main installer (sources lib/)
+├── validate.sh             # Config validation script
+├── Makefile                # Convenience commands
+├── lib/                    # Modular shell libraries
+│   ├── common.sh           # Logging, colors, utilities
+│   ├── config.sh           # Configuration variables
+│   ├── conflicts.sh        # Conflict detection/resolution
+│   ├── backup.sh           # Backup and restore logic
+│   ├── deploy.sh           # Stow deployment
+│   └── verify.sh           # Installation verification
+├── tests/                  # Automated test suite
+│   ├── test_runner.sh      # Test harness
+│   ├── test_conflicts.sh   # Conflict detection tests
+│   ├── test_backup.sh      # Backup logic tests
+│   └── test_deploy.sh      # Deployment tests
+├── .github/workflows/      # CI/CD
+│   └── ci.yml              # GitHub Actions workflow
 ├── zsh/
-│   └── .zshrc                 # Shell config (sources .zshrc.work)
+│   └── .zshrc              # Shell config (sources .zshrc.work)
 ├── git/
-│   ├── .gitconfig             # Git config (includes .gitconfig.work)
-│   └── .gitignore_global      # Global gitignore
+│   ├── .gitconfig          # Git config (includes .gitconfig.work)
+│   └── .gitignore_global   # Global gitignore
 ├── nvim/
-│   └── .config/nvim/          # Neovim config (imports plugins-work/)
+│   └── .config/nvim/       # Neovim config (imports plugins-work/)
 ├── ssh/
-│   └── .ssh/config            # SSH config (includes config.work)
-├── ghostty/
-│   └── .config/ghostty/config # Ghostty terminal config
-└── README.md
+│   └── .ssh/config         # SSH config (includes config.work)
+└── ghostty/
+    └── .config/ghostty/    # Ghostty terminal config
 ```
 
 ## Installation
@@ -55,7 +84,7 @@ These tools enhance the shell experience but are not required:
 | [zoxide](https://github.com/ajeetdsouza/zoxide) | Smarter cd | `brew install zoxide` |
 | [Pure](https://github.com/sindresorhus/pure) | Minimal prompt | `brew install pure` |
 
-### Quick Start (Base Only)
+### Quick Start
 
 ```bash
 # Clone the repository
@@ -66,7 +95,7 @@ cd ~/.dotfiles
 ./install.sh
 ```
 
-#### Install Script Options
+### Install Options
 
 | Option | Description |
 |--------|-------------|
@@ -74,14 +103,37 @@ cd ~/.dotfiles
 | `--adopt` | Adopt existing files into stow packages (keeps current content) |
 | `--help` | Show usage information |
 
-If you have existing config files, the script will detect conflicts and show you how to resolve them:
-
 ```bash
 # Automatically remove conflicting files
 ./install.sh --force
 
 # Or adopt existing files into stow (preserves your current config content)
 ./install.sh --adopt
+```
+
+### Installation Flow
+
+```mermaid
+flowchart TD
+    A[Start] --> B[Check Prerequisites]
+    B --> C{Stow installed?}
+    C -->|No| D[Exit with install instructions]
+    C -->|Yes| E[Backup existing files]
+    E --> F[Create directories]
+    F --> G[Check for conflicts]
+    G --> H{Conflicts found?}
+    H -->|Yes, --force| I[Remove conflicts]
+    H -->|Yes, --adopt| J[Adopt into stow]
+    H -->|Yes, neither| K[Exit with options]
+    H -->|No| L[Deploy base packages]
+    I --> L
+    J --> L
+    L --> M{Work overlay exists?}
+    M -->|Yes| N[Deploy work overlay]
+    M -->|No| O[Skip work overlay]
+    N --> P[Verify installation]
+    O --> P
+    P --> Q[Done]
 ```
 
 ### With Work Overlay
@@ -96,26 +148,116 @@ git clone <your-work-repo-url> ~/.dotfiles-stripe
 cd ~/.dotfiles
 ./install.sh
 
-# If you have conflicts with work overlay files:
-./install.sh --force  # Remove conflicting files
-# or
-./install.sh --adopt  # Adopt existing files into stow
-
 # 4. Manually link nvim plugins-work (Stow can't nest into existing symlinks)
 ln -sf ~/.dotfiles-stripe/nvim/.config/nvim/lua/plugins-work ~/.config/nvim/lua/plugins-work
+```
+
+## Make Commands
+
+Use the Makefile for common operations:
+
+```bash
+make help           # Show all available commands
+make install        # Install dotfiles
+make install-force  # Install, removing conflicts
+make install-adopt  # Install, adopting existing files
+make test           # Run test suite (16 tests)
+make lint           # Run ShellCheck on all scripts
+make validate       # Validate config files
+make clean          # Remove backups older than 7 days
+make uninstall      # Remove all symlinks
 ```
 
 ## How GNU Stow Works
 
 Stow creates symlinks from your home directory to files in the repository:
 
-```
-~/.dotfiles/zsh/.zshrc  →  ~/.zshrc
-~/.dotfiles/git/.gitconfig  →  ~/.gitconfig
-~/.dotfiles/nvim/.config/nvim/  →  ~/.config/nvim/
+```mermaid
+graph LR
+    subgraph "Repository (~/.dotfiles)"
+        A["zsh/.zshrc"]
+        B["git/.gitconfig"]
+        C["nvim/.config/nvim/"]
+    end
+
+    subgraph "Home (~)"
+        D["~/.zshrc"]
+        E["~/.gitconfig"]
+        F["~/.config/nvim/"]
+    end
+
+    A -.->|symlink| D
+    B -.->|symlink| E
+    C -.->|symlink| F
 ```
 
 The directory structure inside each "package" (zsh/, git/, etc.) mirrors where files should appear relative to the target directory (~).
+
+## Development
+
+### Architecture
+
+```mermaid
+graph TD
+    subgraph "install.sh"
+        A[Parse Args] --> B[Main]
+    end
+
+    subgraph "lib/"
+        C[common.sh<br/>logging, colors]
+        D[config.sh<br/>variables, arrays]
+        E[conflicts.sh<br/>detection, resolution]
+        F[backup.sh<br/>backup, restore]
+        G[deploy.sh<br/>stow wrapper]
+        H[verify.sh<br/>post-install checks]
+    end
+
+    B --> C
+    B --> D
+    B --> E
+    B --> F
+    B --> G
+    B --> H
+```
+
+### Running Tests
+
+The test suite includes 16 tests covering conflict detection, backup logic, and deployment:
+
+```bash
+# Run all tests
+./tests/test_runner.sh
+
+# Or via make
+make test
+```
+
+### Test Coverage
+
+| Module | Tests | Coverage |
+|--------|-------|----------|
+| conflicts.sh | 5 | File conflicts, symlink conflicts, directory conflicts |
+| backup.sh | 5 | Needs backup detection, backup creation, stow-managed detection |
+| deploy.sh | 6 | Directory creation, permissions, stow deployment, verification |
+
+### Linting
+
+```bash
+# Run ShellCheck (requires shellcheck to be installed)
+make lint
+
+# Or manually
+shellcheck install.sh lib/*.sh tests/*.sh validate.sh
+```
+
+### CI/CD
+
+GitHub Actions runs on every push and PR:
+
+- **Lint**: ShellCheck on all shell scripts
+- **Test**: Run test suite on Ubuntu and macOS
+- **Validate**: Check zsh and git config syntax
+- **Dry Run**: Full installation test in isolated environment
 
 ## Making Changes
 
@@ -138,7 +280,7 @@ nvim ~/.zshrc.work
 
 # Commit and push
 cd ~/.dotfiles-stripe
-git add -A && git commit -m "Update Stripe aliases" && git push
+git add -A && git commit -m "Update work aliases" && git push
 ```
 
 ## Updating
@@ -154,10 +296,28 @@ cd ~/.dotfiles-stripe && git pull
 source ~/.zshrc
 ```
 
+## Backup and Restore
+
+The installer automatically backs up existing files before deployment:
+
+```bash
+# Backups are stored in timestamped directories
+ls ~/.dotfiles-backup-*
+
+# Restore from a backup manually
+cp -r ~/.dotfiles-backup-20240101-120000/* ~/
+
+# Clean up old backups (older than 7 days)
+make clean
+```
+
 ## Uninstalling
 
 ```bash
-# Remove base symlinks
+# Via make
+make uninstall
+
+# Or manually
 cd ~/.dotfiles
 stow -D -t ~ zsh git nvim ssh ghostty
 
@@ -179,8 +339,9 @@ rm ~/.config/nvim/lua/plugins-work
    mkdir -p ~/.dotfiles/newapp/.config/newapp
    touch ~/.dotfiles/newapp/.config/newapp/config
    ```
-3. Deploy: `stow -v -t ~ newapp`
-4. Add overlay support by adding to the config:
+3. Add to `PACKAGES` array in `lib/config.sh`
+4. Deploy: `./install.sh` or `stow -v -t ~ newapp`
+5. Add overlay support by adding to the config:
    ```bash
    # For shell configs
    [[ -f ~/.newapprc.work ]] && source ~/.newapprc.work
@@ -192,10 +353,11 @@ rm ~/.config/nvim/lua/plugins-work
 
 ## Best Practices
 
-1. **Keep base portable** — No machine-specific or work-specific code
-2. **Conditional loading** — Always check if overlay files exist before sourcing
-3. **Don't store secrets** — Use environment variables or secure vaults
-4. **Test changes** — Run `source ~/.zshrc` before committing
+1. **Keep base portable** - No machine-specific or work-specific code
+2. **Conditional loading** - Always check if overlay files exist before sourcing
+3. **Don't store secrets** - Use environment variables or secure vaults
+4. **Test changes** - Run `make test` and `make validate` before committing
+5. **Run linting** - Use `make lint` to catch shell script issues
 
 ## Troubleshooting
 
@@ -249,6 +411,16 @@ cat ~/.ssh/config
 
 # Verify 1Password agent is running
 ls -la ~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+```
+
+### Tests failing
+
+```bash
+# Run tests with verbose output
+./tests/test_runner.sh
+
+# Run individual test file
+./tests/test_conflicts.sh
 ```
 
 ## License

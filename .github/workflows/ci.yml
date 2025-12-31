@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck on install.sh
+        run: shellcheck install.sh
+
+      - name: Run ShellCheck on lib/*.sh
+        run: shellcheck lib/*.sh
+
+      - name: Run ShellCheck on tests/*.sh
+        run: shellcheck tests/*.sh
+
+      - name: Check shell script syntax
+        run: |
+          for f in install.sh lib/*.sh tests/*.sh validate.sh; do
+            if [[ -f "$f" ]]; then
+              bash -n "$f" || exit 1
+            fi
+          done
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install stow
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt-get install -y stow
+          else
+            brew install stow
+          fi
+
+      - name: Run tests
+        run: ./tests/test_runner.sh
+
+  validate-configs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate zsh syntax
+        run: zsh -n zsh/.zshrc
+
+      - name: Validate git config
+        run: git config --file git/.gitconfig --list > /dev/null
+
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install stow
+        run: sudo apt-get install -y stow
+
+      - name: Test install script (dry run)
+        run: |
+          # Create isolated test environment
+          export HOME=$(mktemp -d)
+          export DOTFILES_DIR=$(pwd)
+          mkdir -p "$HOME/.config" "$HOME/.ssh/sockets"
+          chmod 700 "$HOME/.ssh"
+
+          # Run install
+          ./install.sh
+
+          # Verify symlinks were created
+          test -L "$HOME/.zshrc" || exit 1
+          test -L "$HOME/.gitconfig" || exit 1
