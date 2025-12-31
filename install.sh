@@ -14,6 +14,9 @@ WORK_DOTFILES_DIR="${WORK_DOTFILES_DIR:-$HOME/.dotfiles-stripe}"
 FORCE_MODE=false
 ADOPT_MODE=false
 
+# Track installation status
+INSTALL_WARNINGS=false
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -242,6 +245,9 @@ handle_conflicts() {
                 local path="${conflict#*:}"
                 path="${path%%:*}"
 
+                # Safety check: never remove with empty path
+                [[ -z "$path" ]] && { log_error "Empty path - aborting removal"; continue; }
+
                 # Skip if already removed (parent directory was removed)
                 local already_removed=false
                 for removed in "${removed_paths[@]}"; do
@@ -302,6 +308,7 @@ backup_existing() {
         "$HOME/.gitignore_global"
         "$HOME/.config/nvim"
         "$HOME/.ssh/config"
+        "$HOME/.config/ghostty"
     )
 
     # Check for files that exist and are NOT managed by stow
@@ -357,7 +364,7 @@ backup_existing() {
         done
 
         echo ""
-        log_info "Backup complete. Restore with: cp -r $backup_dir/* ~/"
+        log_info "Backup complete. Restore with: cp -r \"$backup_dir\"/* ~/"
         echo ""
     fi
 }
@@ -378,9 +385,9 @@ create_directories() {
 # -----------------------------------------------------------------------------
 deploy_base() {
     log_info "Deploying base dotfiles from $DOTFILES_DIR..."
-    cd "$DOTFILES_DIR"
+    cd "$DOTFILES_DIR" || { log_error "Cannot access $DOTFILES_DIR"; exit 1; }
 
-    local packages=(zsh git nvim ssh)
+    local packages=(zsh git nvim ssh ghostty)
 
     # Check for conflicts first (unless in force/adopt mode)
     if ! $FORCE_MODE && ! $ADOPT_MODE; then
@@ -425,9 +432,9 @@ deploy_base() {
 deploy_work() {
     if [[ -d "$WORK_DOTFILES_DIR" ]]; then
         log_info "Deploying work overlay from $WORK_DOTFILES_DIR..."
-        cd "$WORK_DOTFILES_DIR"
+        cd "$WORK_DOTFILES_DIR" || { log_error "Cannot access $WORK_DOTFILES_DIR"; return 1; }
 
-        local packages=(zsh git nvim ssh)
+        local packages=(zsh git nvim ssh ghostty)
 
         # Check for conflicts (work overlay adds files, shouldn't conflict much)
         if ! $FORCE_MODE && ! $ADOPT_MODE; then
@@ -503,6 +510,7 @@ verify_install() {
         "$HOME/.gitconfig"
         "$HOME/.config/nvim/init.lua"
         "$HOME/.ssh/config"
+        "$HOME/.config/ghostty/config"
     )
 
     for link in "${symlinks[@]}"; do
@@ -541,7 +549,7 @@ verify_install() {
     done
 
     echo ""
-    if $all_good; then
+    if $all_good && ! $INSTALL_WARNINGS; then
         log_info "Installation complete!"
     else
         log_warn "Installation complete with warnings. Check output above."
@@ -561,7 +569,7 @@ main() {
     backup_existing
     create_directories
     deploy_base
-    deploy_work
+    deploy_work || INSTALL_WARNINGS=true
     verify_install
 
     echo ""

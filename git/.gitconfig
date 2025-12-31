@@ -23,8 +23,9 @@
 [gpg]
     format = ssh
 
-[gpg "ssh"]
-    program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+# Note: For 1Password SSH signing on macOS, add to ~/.gitconfig.work:
+#   [gpg "ssh"]
+#       program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
 
 [commit]
     gpgsign = true
@@ -47,6 +48,6 @@
 # Work Overlay - Include work-specific config if present
 # =============================================================================
 # This allows work dotfiles to extend/override settings (e.g., work email,
-# different signing key). The include is conditional - works without it.
-[includeIf "gitdir:~/"]
+# different signing key). Git handles missing includes gracefully.
+[include]
     path = ~/.gitconfig.work

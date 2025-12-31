@@ -28,6 +28,8 @@ nvim/lazy.lua     ─── imports ───▶  plugins-work/ (if exists)
 │   └── .config/nvim/          # Neovim config (imports plugins-work/)
 ├── ssh/
 │   └── .ssh/config            # SSH config (includes config.work)
+├── ghostty/
+│   └── .config/ghostty/config # Ghostty terminal config
 └── README.md
 ```
 
@@ -42,6 +44,16 @@ brew install stow
 # Ubuntu/Debian
 sudo apt install stow
 ```
+
+### Dependencies (Optional)
+
+These tools enhance the shell experience but are not required:
+
+| Tool | Purpose | Install |
+|------|---------|---------|
+| [Oh My Zsh](https://ohmyz.sh/) | Zsh framework | `sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"` |
+| [zoxide](https://github.com/ajeetdsouza/zoxide) | Smarter cd | `brew install zoxide` |
+| [Pure](https://github.com/sindresorhus/pure) | Minimal prompt | `brew install pure` |
 
 ### Quick Start (Base Only)
 
@@ -78,11 +90,16 @@ If you have existing config files, the script will detect conflicts and show you
 # 1. Install base dotfiles first (see above)
 
 # 2. Clone work overlay
-git clone git@git.corp.stripe.com:willm/.dotfiles-stripe.git ~/.dotfiles-stripe
+git clone <your-work-repo-url> ~/.dotfiles-stripe
 
-# 3. Deploy work overlay configs
-cd ~/.dotfiles-stripe
-stow -v -t ~ zsh git ssh
+# 3. Re-run install script (it will detect and deploy work overlay)
+cd ~/.dotfiles
+./install.sh
+
+# If you have conflicts with work overlay files:
+./install.sh --force  # Remove conflicting files
+# or
+./install.sh --adopt  # Adopt existing files into stow
 
 # 4. Manually link nvim plugins-work (Stow can't nest into existing symlinks)
 ln -sf ~/.dotfiles-stripe/nvim/.config/nvim/lua/plugins-work ~/.config/nvim/lua/plugins-work
@@ -142,7 +159,7 @@ source ~/.zshrc
 ```bash
 # Remove base symlinks
 cd ~/.dotfiles
-stow -D -t ~ zsh git nvim ssh
+stow -D -t ~ zsh git nvim ssh ghostty
 
 # Remove work overlay symlinks
 cd ~/.dotfiles-stripe
@@ -221,14 +238,17 @@ grep "zshrc.work" ~/.zshrc
 
 ### SSH not working after setup
 
-The base SSH config excludes Stripe hosts from 1Password agent settings. If you have issues:
+The base SSH config sets up 1Password SSH agent integration. If you have issues:
 
 ```bash
 # Test SSH connection
-ssh -vT git@git.corp.stripe.com
+ssh -vT git@github.com
 
 # Check config is correct
 cat ~/.ssh/config
+
+# Verify 1Password agent is running
+ls -la ~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 ```
 
 ## License

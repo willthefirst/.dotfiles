@@ -9,12 +9,18 @@
 # Oh My Zsh Setup
 # -----------------------------------------------------------------------------
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="robbyrussell"
 
-# Plugins - add wisely, as too many plugins slow down shell startup
-plugins=(git)
+if [[ ! -d "$ZSH" ]]; then
+    echo "Warning: Oh My Zsh not found at $ZSH"
+    echo "Install: sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
+else
+    ZSH_THEME="robbyrussell"
 
-source $ZSH/oh-my-zsh.sh
+    # Plugins - add wisely, as too many plugins slow down shell startup
+    plugins=(git)
+
+    source $ZSH/oh-my-zsh.sh
+fi
 
 # -----------------------------------------------------------------------------
 # Shell Tools
@@ -26,12 +32,15 @@ if command -v zoxide &> /dev/null; then
 fi
 
 # Pure theme (if installed via Homebrew)
-if command -v brew &> /dev/null && [[ -d "$(brew --prefix)/share/zsh/site-functions" ]]; then
-  fpath+=("$(brew --prefix)/share/zsh/site-functions")
-  autoload -U promptinit; promptinit
-  if (( $+functions[prompt_pure_setup] )); then
-    prompt pure
-  fi
+if command -v brew &> /dev/null; then
+    local brew_prefix="$(brew --prefix)"
+    if [[ -d "$brew_prefix/share/zsh/site-functions" ]]; then
+        fpath+=("$brew_prefix/share/zsh/site-functions")
+        autoload -U promptinit; promptinit
+        if (( $+functions[prompt_pure_setup] )); then
+            prompt pure
+        fi
+    fi
 fi
 
 # -----------------------------------------------------------------------------
@@ -43,20 +52,20 @@ autoload -Uz bashcompinit; bashcompinit
 # -----------------------------------------------------------------------------
 # Environment Variables
 # -----------------------------------------------------------------------------
-# export EDITOR='nvim'
-# export LANG=en_US.UTF-8
+export EDITOR='nvim'
+export LANG=en_US.UTF-8
 
 # -----------------------------------------------------------------------------
 # PATH
 # -----------------------------------------------------------------------------
-# Add RVM to PATH for scripting
-export PATH="$PATH:$HOME/.rvm/bin"
+# Add RVM to PATH for scripting (if installed)
+[[ -d "$HOME/.rvm/bin" ]] && export PATH="$PATH:$HOME/.rvm/bin"
 
 # -----------------------------------------------------------------------------
 # Aliases
 # -----------------------------------------------------------------------------
-# alias ll='ls -la'
-# alias vim='nvim'
+alias ll='ls -la'
+alias vim='nvim'
 
 # -----------------------------------------------------------------------------
 # Functions
