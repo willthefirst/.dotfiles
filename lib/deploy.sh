@@ -33,7 +33,7 @@ deploy_packages() {
     local base_dir="$1"
     shift
     local packages=("$@")
-    local stow_opts=(-v -t "$HOME")
+    local stow_opts=(-v -t "$HOME" --no-folding)
     local stowed_pkgs=()
     local missing_pkgs=()
 
