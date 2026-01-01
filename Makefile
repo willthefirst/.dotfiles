@@ -26,7 +26,10 @@ test:
 
 lint:
 	shellcheck install.sh lib/*.sh tests/*.sh validate.sh
-	@echo "All files pass ShellCheck"
+	@for f in install.sh lib/*.sh tests/*.sh validate.sh; do \
+		bash -n "$$f" || exit 1; \
+	done
+	@echo "All files pass ShellCheck and syntax check"
 
 validate:
 	./validate.sh

@@ -15,22 +15,8 @@ jobs:
       - name: Install ShellCheck
         run: sudo apt-get install -y shellcheck
 
-      - name: Run ShellCheck on install.sh
-        run: shellcheck install.sh
-
-      - name: Run ShellCheck on lib/*.sh
-        run: shellcheck lib/*.sh
-
-      - name: Run ShellCheck on tests/*.sh
-        run: shellcheck tests/*.sh
-
-      - name: Check shell script syntax
-        run: |
-          for f in install.sh lib/*.sh tests/*.sh validate.sh; do
-            if [[ -f "$f" ]]; then
-              bash -n "$f" || exit 1
-            fi
-          done
+      - name: Run lint
+        run: make lint
 
   test:
     runs-on: ${{ matrix.os }}
@@ -49,18 +35,15 @@ jobs:
           fi
 
       - name: Run tests
-        run: ./tests/test_runner.sh
+        run: make test
 
   validate-configs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate zsh syntax
-        run: zsh -n zsh/.zshrc
-
-      - name: Validate git config
-        run: git config --file git/.gitconfig --list > /dev/null
+      - name: Validate configs
+        run: make validate
 
   dry-run:
     runs-on: ubuntu-latest
@@ -79,7 +62,7 @@ jobs:
           chmod 700 "$HOME/.ssh"
 
           # Run install
-          ./install.sh
+          make install
 
           # Verify symlinks were created
           test -L "$HOME/.zshrc" || exit 1
