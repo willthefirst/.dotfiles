@@ -1,4 +1,4 @@
-# Dotfiles
+test# Dotfiles
 
 Personal dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
@@ -79,11 +79,11 @@ sudo apt install stow
 
 These tools enhance the shell experience but are not required:
 
-| Tool | Purpose | Install |
-|------|---------|---------|
-| [Oh My Zsh](https://ohmyz.sh/) | Zsh framework | `sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"` |
-| [zoxide](https://github.com/ajeetdsouza/zoxide) | Smarter cd | `brew install zoxide` |
-| [Pure](https://github.com/sindresorhus/pure) | Minimal prompt | `brew install pure` |
+| Tool                                            | Purpose        | Install                                                                                           |
+| ----------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------- |
+| [Oh My Zsh](https://ohmyz.sh/)                  | Zsh framework  | `sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"` |
+| [zoxide](https://github.com/ajeetdsouza/zoxide) | Smarter cd     | `brew install zoxide`                                                                             |
+| [Pure](https://github.com/sindresorhus/pure)    | Minimal prompt | `brew install pure`                                                                               |
 
 ### Quick Start
 
@@ -98,11 +98,11 @@ cd ~/.dotfiles
 
 ### Install Options
 
-| Option | Description |
-|--------|-------------|
-| `--force` | Remove conflicting symlinks/files before stowing |
+| Option    | Description                                                     |
+| --------- | --------------------------------------------------------------- |
+| `--force` | Remove conflicting symlinks/files before stowing                |
 | `--adopt` | Adopt existing files into stow packages (keeps current content) |
-| `--help` | Show usage information |
+| `--help`  | Show usage information                                          |
 
 ```bash
 # Automatically remove conflicting files
@@ -235,11 +235,11 @@ make test
 
 ### Test Coverage
 
-| Module | Tests | Coverage |
-|--------|-------|----------|
-| conflicts.sh | 5 | File conflicts, symlink conflicts, directory conflicts |
-| backup.sh | 5 | Needs backup detection, backup creation, stow-managed detection |
-| deploy.sh | 11 | Directory creation, permissions, stow deployment, verification, config content validation, broken symlink detection |
+| Module       | Tests | Coverage                                                                                                            |
+| ------------ | ----- | ------------------------------------------------------------------------------------------------------------------- |
+| conflicts.sh | 5     | File conflicts, symlink conflicts, directory conflicts                                                              |
+| backup.sh    | 5     | Needs backup detection, backup creation, stow-managed detection                                                     |
+| deploy.sh    | 11    | Directory creation, permissions, stow deployment, verification, config content validation, broken symlink detection |
 
 ### Linting
 
@@ -332,6 +332,7 @@ rm ~/.config/nvim/lua/plugins-work
 
 1. Create package directory: `mkdir -p ~/.dotfiles/newapp`
 2. **Find and copy your actual config** (don't just create empty files):
+
    ```bash
    # First, find where the app currently stores its config
    find ~ ~/Library -name "*newapp*config*" 2>/dev/null
@@ -347,9 +348,11 @@ rm ~/.config/nvim/lua/plugins-work
    # Some apps use macOS-specific paths - check those too
    # Example: ~/Library/Application Support/com.app.name/config
    ```
+
 3. Add to `PACKAGES` array in `lib/config.sh`
 4. Deploy: `./install.sh` or `stow -v -t ~ newapp`
 5. Add overlay support by adding to the config:
+
    ```bash
    # For shell configs
    [[ -f ~/.newapprc.work ]] && source ~/.newapprc.work
@@ -381,11 +384,11 @@ flowchart TD
     B -->|No| E[No signing]
 ```
 
-| Repository Type | Remote Pattern | Signing |
-|-----------------|----------------|---------|
+| Repository Type | Remote Pattern                  | Signing       |
+| --------------- | ------------------------------- | ------------- |
 | Personal GitHub | `git@github.com:willthefirst/*` | 1Password SSH |
-| Work repos | Any other remote | Disabled |
-| New repos | No remote yet | Disabled |
+| Work repos      | Any other remote                | Disabled      |
+| New repos       | No remote yet                   | Disabled      |
 
 ### Configuration Files
 
