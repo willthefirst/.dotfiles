@@ -14,15 +14,30 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- Auto-detect and load work overlay plugins from ~/.dotfiles-stripe
+-- This eliminates the need for a manual symlink
+local work_plugins_path = vim.fn.expand("~/.dotfiles-stripe/nvim/.config/nvim/lua/plugins-work")
+local has_work_plugins = vim.fn.isdirectory(work_plugins_path) == 1
+
+if has_work_plugins then
+  -- Add work plugins directory to package path so lazy.nvim can import it
+  package.path = package.path .. ";" .. vim.fn.expand("~/.dotfiles-stripe/nvim/.config/nvim/lua") .. "/?.lua"
+end
+
+local spec = {
+  -- add LazyVim and import its plugins
+  { "LazyVim/LazyVim", import = "lazyvim.plugins" },
+  -- import/override with your plugins
+  { import = "plugins" },
+}
+
+-- Only import work plugins if the overlay directory exists
+if has_work_plugins then
+  table.insert(spec, { import = "plugins-work" })
+end
+
 require("lazy").setup({
-  spec = {
-    -- add LazyVim and import its plugins
-    { "LazyVim/LazyVim", import = "lazyvim.plugins" },
-    -- import/override with your plugins
-    { import = "plugins" },
-    -- import work overlay plugins (loaded when ~/.config/nvim/lua/plugins-work exists)
-    { import = "plugins-work" },
-  },
+  spec = spec,
   defaults = {
     -- By default, only LazyVim plugins will be lazy-loaded. Your custom plugins will load during startup.
     -- If you know what you're doing, you can set this to `true` to have all your custom plugins lazy-loaded by default.

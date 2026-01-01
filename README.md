@@ -148,9 +148,6 @@ git clone <your-work-repo-url> ~/.dotfiles-stripe
 # 3. Re-run install script (it will detect and deploy work overlay)
 cd ~/.dotfiles
 ./install.sh
-
-# 4. Manually link nvim plugins-work (Stow can't nest into existing symlinks)
-ln -sf ~/.dotfiles-stripe/nvim/.config/nvim/lua/plugins-work ~/.config/nvim/lua/plugins-work
 ```
 
 ## Make Commands
@@ -324,8 +321,7 @@ stow -D -t ~ zsh git nvim ssh ghostty
 
 # Remove work overlay symlinks
 cd ~/.dotfiles-stripe
-stow -D -t ~ zsh git ssh
-rm ~/.config/nvim/lua/plugins-work
+stow -D -t ~ zsh git ssh nvim
 ```
 
 ## Adding New Configs
