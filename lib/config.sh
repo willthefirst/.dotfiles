@@ -31,5 +31,5 @@ VERIFY_SYMLINKS=(
     "$HOME/.gitconfig.personal"
     "$HOME/.config/nvim/init.lua"
     "$HOME/.ssh/config"
-    "$HOME/.config/ghostty"
+    "$HOME/.config/ghostty/config"
 )
