@@ -1,19 +1,27 @@
 # Tool versions - CI reads these to stay in sync with local
 SHELLCHECK_VERSION := 0.11.0
 
-.PHONY: install install-force install-adopt test lint check-shellcheck-version validate clean uninstall help
+.PHONY: install install-force install-adopt install-all deps test lint check-shellcheck-version validate clean uninstall help
+
+# Default packages (all available)
+PACKAGES ?= nvim git zsh ssh ghostty
 
 help:
 	@echo "Dotfiles Management"
 	@echo "==================="
-	@echo "  make install       - Install dotfiles"
-	@echo "  make install-force - Install dotfiles, removing conflicts"
-	@echo "  make install-adopt - Install dotfiles, adopting existing files"
-	@echo "  make test          - Run test suite"
-	@echo "  make lint          - Run ShellCheck"
-	@echo "  make validate      - Validate configs"
-	@echo "  make clean         - Remove backups older than 7 days"
-	@echo "  make uninstall     - Remove all symlinks"
+	@echo "  make install        - Install dotfiles (symlinks only)"
+	@echo "  make install-force  - Install dotfiles, removing conflicts"
+	@echo "  make install-adopt  - Install dotfiles, adopting existing files"
+	@echo "  make deps           - Install dependencies for all packages"
+	@echo "  make install-all    - Full setup (deps + stow)"
+	@echo "  make test           - Run test suite"
+	@echo "  make lint           - Run ShellCheck"
+	@echo "  make validate       - Validate configs"
+	@echo "  make clean          - Remove backups older than 7 days"
+	@echo "  make uninstall      - Remove all symlinks"
+	@echo ""
+	@echo "Options:"
+	@echo "  PACKAGES=\"nvim git\" - Specify packages (for deps, install-all)"
 
 install:
 	./install.sh
@@ -24,10 +32,16 @@ install-force:
 install-adopt:
 	./install.sh --adopt
 
+deps:
+	./install.sh --deps-only $(PACKAGES)
+
+install-all:
+	./install.sh --with-deps $(PACKAGES)
+
 test:
 	./tests/test_runner.sh
 
-SHELL_FILES := install.sh lib/*.sh tests/*.sh validate.sh
+SHELL_FILES := install.sh lib/*.sh tests/*.sh validate.sh */install.sh
 
 check-shellcheck-version:
 	@shellcheck --version | grep -q 'version: $(SHELLCHECK_VERSION)' \
