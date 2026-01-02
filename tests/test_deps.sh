@@ -151,7 +151,8 @@ EOF
 
     local output
     output=$(install_package_deps "testpkg" 2>&1)
-    assert_contains "$output" "install_testpkg"
+    assert_contains "$output" "testpkg"
+    assert_contains "$output" "custom"
 }
 
 test_install_order_runs_install_sh_before_deps() {
@@ -166,15 +167,15 @@ EOF
     local output
     output=$(install_package_deps "orderpkg" 2>&1)
 
-    # Get line numbers for each
+    # Get line numbers for each (custom install vs dep)
     local install_line dep_line
-    install_line=$(echo "$output" | grep -n "install_orderpkg" | head -1 | cut -d: -f1)
+    install_line=$(echo "$output" | grep -n "custom" | head -1 | cut -d: -f1)
     dep_line=$(echo "$output" | grep -n "dep1" | head -1 | cut -d: -f1)
 
     if [[ -n "$install_line" && -n "$dep_line" ]]; then
         assert "Custom install should run before deps" test "$install_line" -lt "$dep_line"
     else
-        echo "  Could not find both install function and dep in output"
+        echo "  Could not find both custom install and dep in output"
         return 1
     fi
 }
@@ -215,7 +216,7 @@ test_dry_run_mode_prevents_install() {
     deps_dry_run_enable
     local output
     output=$(install_package_deps "drypkg" 2>&1)
-    assert_contains "$output" "DRY-RUN"
+    assert_contains "$output" "dry-run"
 }
 
 # =============================================================================

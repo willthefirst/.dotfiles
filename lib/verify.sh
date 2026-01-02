@@ -23,13 +23,12 @@ verify_installation() {
         fi
     done
 
-    echo ""
     if $all_good; then
-        echo "✓ Installation verified ($count configs)"
+        log_ok "Verified ($count configs)"
     else
-        echo -e "${YELLOW}⚠${NC} Installation complete with warnings:"
+        log_warn "Complete with warnings:"
         for issue in "${issues[@]}"; do
-            echo "  - $issue"
+            echo "      $issue"
         done
     fi
 }

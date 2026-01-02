@@ -97,23 +97,25 @@ main() {
   local target_packages
   read -ra target_packages <<< "$(get_target_packages)"
 
-  print_header
-
   # Deps-only mode: just install dependencies and exit
   if $DEPS_ONLY; then
-    log_info "Installing dependencies only..."
+    print_header "Installing Programs"
     install_all_deps "${target_packages[@]}"
     return
   fi
 
-  # With-deps mode: install dependencies first
+  # Full setup mode: install dependencies then configure
   if $WITH_DEPS; then
-    log_info "Installing dependencies..."
+    SETUP_PHASE="1/2"
     install_all_deps "${target_packages[@]}"
-    echo ""
+    SETUP_PHASE="2/2"
+  else
+    # Configure-only mode
+    print_header
   fi
 
-  # Normal stow workflow
+  # Stow workflow
+  log_section "Configuring dotfiles..."
   check_prerequisites
   create_backup "${BACKUP_FILES[@]}"
   create_directories

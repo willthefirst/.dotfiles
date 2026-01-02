@@ -11,9 +11,20 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Logging functions
-log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+log_step() { echo -e "  ${GREEN}→${NC} $1"; }
+log_ok() { echo -e "  ${GREEN}✓${NC} $1"; }
+log_warn() { echo -e "  ${YELLOW}!${NC} $1"; }
+log_error() { echo -e "  ${RED}✗${NC} $1"; }
+log_section() {
+    local prefix=""
+    local newline="\n"
+    if [[ -n "$SETUP_PHASE" ]]; then
+        prefix="[$SETUP_PHASE] "
+        # No leading newline for first section
+        [[ "$SETUP_PHASE" == "1/2" ]] && newline=""
+    fi
+    echo -e "${newline}${prefix}$1"
+}
 
 # Check if a command exists
 require_command() {
@@ -39,12 +50,15 @@ is_linux() {
     [[ "$(uname -s)" == "Linux" ]]
 }
 
+# Setup phase tracking (set by install.sh for multi-step output)
+SETUP_PHASE=""
+
 # Print section header
 print_header() {
+    local title="${1:-Dotfiles}"
     echo "=============================================="
-    echo " Dotfiles Installation"
+    echo " $title"
     echo "=============================================="
-    echo ""
 }
 
 # Print next steps after installation

@@ -15,7 +15,6 @@ create_directories() {
     mkdir -p "$HOME/.ssh/sockets"
     chmod 700 "$HOME/.ssh"
     chmod 700 "$HOME/.ssh/sockets"
-    echo "✓ Directories created"
 }
 
 # Check prerequisites (GNU Stow)
@@ -29,7 +28,6 @@ check_prerequisites() {
     if ! require_command "stow" "$install_hint"; then
         exit 1
     fi
-    echo "✓ GNU Stow found"
 }
 
 # Deploy packages using stow
@@ -44,34 +42,32 @@ deploy_packages() {
 
     if [[ "${ADOPT_MODE:-false}" == "true" ]]; then
         stow_opts+=(--adopt)
-        log_info "Adopt mode: existing files will be adopted into stow packages"
+        log_step "Adopt mode enabled"
     fi
 
     for pkg in "${packages[@]}"; do
         if [[ -d "$base_dir/$pkg" ]]; then
             local stow_output filtered_output
             if ! stow_output=$(cd "$base_dir" && stow "${stow_opts[@]}" "$pkg" 2>&1); then
-                echo -e "  ${RED}✗${NC} Failed to stow: $pkg"
+                log_error "$pkg"
                 filtered_output=$(echo "$stow_output" | filter_stow_output)
                 [[ -n "$filtered_output" ]] && echo "$filtered_output"
                 return 1
             fi
             stowed_pkgs+=("$pkg")
-            filtered_output=$(echo "$stow_output" | filter_stow_output)
-            [[ -n "$filtered_output" ]] && echo "$filtered_output"
         else
             missing_pkgs+=("$pkg")
         fi
     done
 
-    # Show summary
+    # Show stowed packages
     if [[ ${#stowed_pkgs[@]} -gt 0 ]]; then
-        echo "  Stowing: ${stowed_pkgs[*]}"
+        log_ok "${stowed_pkgs[*]}"
     fi
 
     # Show missing packages
     for pkg in "${missing_pkgs[@]}"; do
-        echo -e "  ${YELLOW}⚠${NC} Package not found: $pkg"
+        log_warn "$pkg (not found)"
     done
 
     return 0
@@ -79,9 +75,6 @@ deploy_packages() {
 
 # Deploy base dotfiles
 deploy_base() {
-    echo ""
-    echo "Deploying dotfiles..."
-
     if [[ ! -d "$DOTFILES_DIR" ]]; then
         log_error "Cannot access $DOTFILES_DIR"
         exit 1

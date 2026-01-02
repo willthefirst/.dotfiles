@@ -38,6 +38,7 @@ pkg_install() {
 
         [[ ${#regular_pkgs[@]} -gt 0 ]] && brew install "${regular_pkgs[@]}"
         [[ ${#cask_pkgs[@]} -gt 0 ]] && brew install --cask "${cask_pkgs[@]}"
+        return 0
     elif is_linux; then
         sudo apt update
         sudo apt install -y "${packages[@]}"
@@ -141,8 +142,6 @@ install_package_deps() {
         return 0  # No deps to install, not an error
     fi
 
-    log_info "Installing dependencies for: $pkg"
-
     # Step 1: Run custom install.sh if it exists
     if [[ -f "$pkg_dir/install.sh" ]]; then
         local install_func="install_${pkg}"
@@ -151,15 +150,16 @@ install_package_deps() {
         source "$pkg_dir/install.sh"
 
         if declare -f "$install_func" >/dev/null; then
-            log_info "  Running custom installer: $install_func"
             if $DRY_RUN; then
-                log_info "  [DRY-RUN] Would run: $install_func"
-            elif ! "$install_func"; then
-                log_error "  Custom installer failed for $pkg"
+                log_step "$pkg (custom installer, dry-run)"
+            elif "$install_func"; then
+                log_ok "$pkg (custom)"
+            else
+                log_error "$pkg (custom installer failed)"
                 had_failure=true
             fi
         else
-            log_warn "  install.sh exists but no $install_func function found"
+            log_warn "$pkg: install.sh missing $install_func()"
         fi
     fi
 
@@ -204,21 +204,21 @@ install_single_dep() {
 
     # Check if already installed
     if pkg_installed "$check_dep" || has_command "$check_dep"; then
-        log_info "  Already installed: $check_dep"
+        log_ok "$check_dep"
         return 0
     fi
 
     if $DRY_RUN; then
-        log_info "  [DRY-RUN] Would install: $dep"
+        log_step "$dep (dry-run)"
         return 0
     fi
 
-    log_info "  Installing: $dep"
     # shellcheck disable=SC2086
-    if pkg_install $dep; then
+    if pkg_install $dep >/dev/null 2>&1; then
+        log_ok "$dep"
         return 0
     else
-        log_error "  Failed to install: $dep"
+        log_error "$dep"
         return 1
     fi
 }
@@ -233,15 +233,17 @@ install_all_deps() {
     # Verify package manager is available
     if is_macos; then
         if ! has_command brew; then
-            log_error "Homebrew is not installed. Install it from https://brew.sh"
+            log_error "Homebrew not installed (https://brew.sh)"
             return 1
         fi
     elif is_linux; then
         if ! has_command apt; then
-            log_error "apt is not available. This script supports Debian/Ubuntu-based systems."
+            log_error "apt not available (requires Debian/Ubuntu)"
             return 1
         fi
     fi
+
+    log_section "Installing programs..."
 
     for pkg in "${packages[@]}"; do
         if ! install_package_deps "$pkg"; then
@@ -249,11 +251,8 @@ install_all_deps() {
         fi
     done
 
-    echo ""
-    log_info "Dependency installation complete"
-
     if $any_failed; then
-        log_warn "Some dependencies failed to install"
+        log_warn "Some dependencies failed"
         return 1
     fi
     return 0

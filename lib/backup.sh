@@ -50,7 +50,7 @@ create_backup() {
     done
 
     if [[ $backed_up -gt 0 ]]; then
-        echo "✓ Backed up $backed_up files to $backup_dir"
+        log_ok "Backed up $backed_up files to $backup_dir"
     fi
 }
 
@@ -78,7 +78,7 @@ restore_backup() {
         fi
     done
 
-    echo "✓ Restored $restored files from $backup_dir"
+    log_ok "Restored $restored files from $backup_dir"
 }
 
 # List available backups
