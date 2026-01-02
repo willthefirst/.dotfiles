@@ -16,14 +16,24 @@ log_step() { echo -e "  ${GREEN}→${NC} $1"; }
 log_ok() { echo -e "  ${GREEN}✓${NC} $1"; }
 log_warn() { echo -e "  ${YELLOW}!${NC} $1"; }
 log_error() { echo -e "  ${RED}✗${NC} $1"; }
+# Track if we've printed a section yet (for consistent newline handling)
+_FIRST_SECTION=true
+
 log_section() {
     local prefix=""
-    local newline="\n"
+    local newline=""
+
+    # Add leading newline after first section
+    if ! $_FIRST_SECTION; then
+        newline="\n"
+    fi
+    _FIRST_SECTION=false
+
+    # Add phase prefix if set
     if [[ -n "$SETUP_PHASE" ]]; then
         prefix="[$SETUP_PHASE] "
-        # No leading newline for first section
-        [[ "$SETUP_PHASE" == "1/2" ]] && newline=""
     fi
+
     echo -e "${newline}${prefix}$1"
 }
 
