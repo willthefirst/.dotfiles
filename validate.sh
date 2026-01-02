@@ -15,10 +15,12 @@ errors=0
 
 validate_zsh() {
     log_info "Validating zsh config..."
-    if zsh -n "$SCRIPT_DIR/zsh/.zshrc" 2>/dev/null; then
+    local zsh_output
+    if zsh_output=$(zsh -n "$SCRIPT_DIR/zsh/.zshrc" 2>&1); then
         log_info "  [ok] zsh/.zshrc syntax valid"
     else
         log_error "  [x] zsh/.zshrc has syntax errors"
+        log_error "  $zsh_output"
         ((errors++)) || true
     fi
 }
