@@ -1,4 +1,7 @@
-.PHONY: install install-force install-adopt test lint validate clean uninstall help
+# Tool versions - CI reads these to stay in sync with local
+SHELLCHECK_VERSION := 0.11.0
+
+.PHONY: install install-force install-adopt test lint check-shellcheck-version validate clean uninstall help
 
 help:
 	@echo "Dotfiles Management"
@@ -24,11 +27,15 @@ install-adopt:
 test:
 	./tests/test_runner.sh
 
-lint:
-	shellcheck install.sh lib/*.sh tests/*.sh validate.sh
-	@for f in install.sh lib/*.sh tests/*.sh validate.sh; do \
-		bash -n "$$f" || exit 1; \
-	done
+SHELL_FILES := install.sh lib/*.sh tests/*.sh validate.sh
+
+check-shellcheck-version:
+	@shellcheck --version | grep -q 'version: $(SHELLCHECK_VERSION)' \
+		|| { echo "Error: expected shellcheck $(SHELLCHECK_VERSION), run: brew upgrade shellcheck"; exit 1; }
+
+lint: check-shellcheck-version
+	shellcheck $(SHELL_FILES)
+	@for f in $(SHELL_FILES); do bash -n "$$f" || exit 1; done
 	@echo "All files pass ShellCheck and syntax check"
 
 validate:

@@ -13,7 +13,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install ShellCheck
-        run: sudo apt-get install -y shellcheck
+        run: |
+          VERSION=$(grep '^SHELLCHECK_VERSION' Makefile | cut -d'=' -f2 | tr -d ' ')
+          wget -qO- "https://github.com/koalaman/shellcheck/releases/download/v${VERSION}/shellcheck-v${VERSION}.linux.x86_64.tar.xz" | tar -xJf -
+          sudo cp "shellcheck-v${VERSION}/shellcheck" /usr/local/bin/
 
       - name: Run lint
         run: make lint
