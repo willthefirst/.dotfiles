@@ -45,7 +45,7 @@ create_backup() {
             backup_path="$backup_dir/$(basename "$file")"
             # Use -RP to preserve symlinks without following (avoids errors on broken symlinks)
             cp -RP "$file" "$backup_path" 2>/dev/null || true
-            ((backed_up++))
+            ((++backed_up))
         fi
     done
 
@@ -74,7 +74,7 @@ restore_backup() {
             # Remove existing file/symlink first
             file_or_link_exists "$target" && rm -rf "$target"
             cp -r "$file" "$target"
-            ((restored++))
+            ((++restored))
         fi
     done
 

@@ -74,13 +74,15 @@ file_or_link_exists() {
 is_dotfiles_managed() {
     local path="$1"
     local check_path="$path"
+    local dotfiles_resolved
+    dotfiles_resolved=$(readlink -f "$DOTFILES_DIR" 2>/dev/null || echo "$DOTFILES_DIR")
 
     # Check if the path itself or any parent is a symlink into dotfiles
     while [[ "$check_path" != "$HOME" && "$check_path" != "/" ]]; do
         if [[ -L "$check_path" ]]; then
             local target
             target=$(readlink -f "$check_path" 2>/dev/null || echo "")
-            if [[ "$target" == *"$DOTFILES_DIR"* ]]; then
+            if [[ "$target" == *"$dotfiles_resolved"* ]]; then
                 return 0
             fi
         fi
