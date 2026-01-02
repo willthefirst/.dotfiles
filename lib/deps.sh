@@ -202,14 +202,15 @@ install_single_dep() {
         check_dep="${dep#--cask }"
     fi
 
-    # Check if already installed
-    if pkg_installed "$check_dep" || has_command "$check_dep"; then
-        log_ok "$check_dep"
+    # Check dry-run first to avoid slow brew calls in tests
+    if $DRY_RUN; then
+        log_step "$dep (dry-run)"
         return 0
     fi
 
-    if $DRY_RUN; then
-        log_step "$dep (dry-run)"
+    # Check if already installed
+    if pkg_installed "$check_dep" || has_command "$check_dep"; then
+        log_ok "$check_dep"
         return 0
     fi
 
