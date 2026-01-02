@@ -10,16 +10,9 @@ needs_backup() {
     local files=("$@")
 
     for file in "${files[@]}"; do
-        if [[ -e "$file" || -L "$file" ]]; then
-            if [[ -L "$file" ]]; then
-                # It's a symlink - check if it's managed by stow (points into dotfiles)
-                local target
-                target=$(readlink -f "$file" 2>/dev/null || echo "")
-                if [[ "$target" != *"$DOTFILES_DIR"* ]]; then
-                    return 0
-                fi
-            else
-                # It's a regular file/directory
+        if file_or_link_exists "$file"; then
+            # Only backup if it's not already managed by stow
+            if ! is_dotfiles_managed "$file"; then
                 return 0
             fi
         fi
@@ -47,29 +40,15 @@ create_backup() {
 
     local backed_up=()
     for file in "${files[@]}"; do
-        if [[ -e "$file" || -L "$file" ]]; then
-            local should_backup=false
-
+        if file_or_link_exists "$file" && ! is_dotfiles_managed "$file"; then
+            local backup_path
+            backup_path="$backup_dir/$(basename "$file")"
             if [[ -L "$file" ]]; then
-                local target
-                target=$(readlink -f "$file" 2>/dev/null || echo "")
-                if [[ "$target" != *"$DOTFILES_DIR"* ]]; then
-                    should_backup=true
-                fi
+                cp -rL "$file" "$backup_path" 2>/dev/null || cp -r "$file" "$backup_path"
             else
-                should_backup=true
+                cp -r "$file" "$backup_path"
             fi
-
-            if $should_backup; then
-                local backup_path
-                backup_path="$backup_dir/$(basename "$file")"
-                if [[ -L "$file" ]]; then
-                    cp -rL "$file" "$backup_path" 2>/dev/null || cp -r "$file" "$backup_path"
-                else
-                    cp -r "$file" "$backup_path"
-                fi
-                backed_up+=("$(basename "$file")")
-            fi
+            backed_up+=("$(basename "$file")")
         fi
     done
 
@@ -96,7 +75,7 @@ restore_backup() {
             local target="$HOME/$filename"
 
             # Remove existing file/symlink first
-            [[ -e "$target" || -L "$target" ]] && rm -rf "$target"
+            file_or_link_exists "$target" && rm -rf "$target"
             cp -r "$file" "$target"
             ((restored++))
         fi

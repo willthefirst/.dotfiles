@@ -7,29 +7,58 @@
 # Directory paths
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 
-# Stow packages to deploy
-# shellcheck disable=SC2034
-PACKAGES=(zsh git nvim ssh ghostty)
-
-# Files to check for backup (these are what stow will manage)
-# shellcheck disable=SC2034
-BACKUP_FILES=(
-    "$HOME/.zshrc"
-    "$HOME/.gitconfig"
-    "$HOME/.gitconfig.personal"
-    "$HOME/.gitignore_global"
-    "$HOME/.config/nvim"
-    "$HOME/.ssh/config"
-    "$HOME/.config/ghostty"
+# =============================================================================
+# Package Configuration
+# Single source of truth: package -> backup_path -> verify_path
+# Format: "package:backup_path:verify_path"
+# =============================================================================
+PACKAGE_CONFIG=(
+    "zsh:$HOME/.zshrc:$HOME/.zshrc"
+    "git:$HOME/.gitconfig:$HOME/.gitconfig"
+    "git:$HOME/.gitconfig.personal:$HOME/.gitconfig.personal"
+    "git:$HOME/.gitignore_global:$HOME/.gitignore_global"
+    "nvim:$HOME/.config/nvim:$HOME/.config/nvim/init.lua"
+    "ssh:$HOME/.ssh/config:$HOME/.ssh/config"
+    "ghostty:$HOME/.config/ghostty:$HOME/.config/ghostty/config"
 )
 
-# Symlinks to verify after installation
+# Derived arrays (populated by init_config)
 # shellcheck disable=SC2034
-VERIFY_SYMLINKS=(
-    "$HOME/.zshrc"
-    "$HOME/.gitconfig"
-    "$HOME/.gitconfig.personal"
-    "$HOME/.config/nvim/init.lua"
-    "$HOME/.ssh/config"
-    "$HOME/.config/ghostty/config"
-)
+PACKAGES=()
+# shellcheck disable=SC2034
+BACKUP_FILES=()
+# shellcheck disable=SC2034
+VERIFY_SYMLINKS=()
+
+# Initialize derived arrays from PACKAGE_CONFIG
+# Call this after sourcing config.sh
+init_config() {
+    local seen_packages=()
+
+    for entry in "${PACKAGE_CONFIG[@]}"; do
+        local pkg="${entry%%:*}"
+        local rest="${entry#*:}"
+        local backup="${rest%%:*}"
+        local verify="${rest#*:}"
+
+        # Add package if not seen
+        local found=false
+        for seen in "${seen_packages[@]}"; do
+            if [[ "$seen" == "$pkg" ]]; then
+                found=true
+                break
+            fi
+        done
+        if ! $found; then
+            PACKAGES+=("$pkg")
+            seen_packages+=("$pkg")
+        fi
+
+        # Add backup and verify paths
+        BACKUP_FILES+=("$backup")
+        VERIFY_SYMLINKS+=("$verify")
+    done
+}
+
+# Auto-initialize when sourced
+init_config

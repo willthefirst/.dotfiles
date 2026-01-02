@@ -14,32 +14,15 @@ source "$ROOT_DIR/lib/conflicts.sh"
 source "$ROOT_DIR/lib/backup.sh"
 source "$ROOT_DIR/lib/deploy.sh"
 source "$ROOT_DIR/lib/verify.sh"
-
-# Test variables
-TEST_HOME=""
-TEST_DOTFILES=""
-ORIGINAL_HOME=""
-ORIGINAL_DOTFILES_DIR=""
+# shellcheck source=tests/helpers.sh
+source "$SCRIPT_DIR/helpers.sh"
 
 setup() {
-    TEST_HOME=$(mktemp -d)
-    TEST_DOTFILES=$(mktemp -d)
-    ORIGINAL_HOME="$HOME"
-    ORIGINAL_DOTFILES_DIR="$DOTFILES_DIR"
-
-    # Override for testing
-    HOME="$TEST_HOME"
-    DOTFILES_DIR="$TEST_DOTFILES"
-
-    # Create required directories
-    mkdir -p "$TEST_HOME/.config"
-    mkdir -p "$TEST_HOME/.ssh"
+    setup_test_env
 }
 
 teardown() {
-    HOME="$ORIGINAL_HOME"
-    DOTFILES_DIR="$ORIGINAL_DOTFILES_DIR"
-    rm -rf "$TEST_HOME" "$TEST_DOTFILES"
+    teardown_test_env
 }
 
 test_create_directories_creates_config() {
@@ -119,7 +102,7 @@ test_deploy_packages_creates_symlinks() {
     teardown
 }
 
-test_is_stow_managed_detects_direct_symlink() {
+test_is_dotfiles_managed_detects_direct_symlink() {
     setup
 
     # Create a stow-managed symlink
@@ -127,17 +110,17 @@ test_is_stow_managed_detects_direct_symlink() {
     touch "$TEST_DOTFILES/zsh/.zshrc"
     ln -s "$TEST_DOTFILES/zsh/.zshrc" "$TEST_HOME/.zshrc"
 
-    if is_stow_managed "$TEST_HOME/.zshrc" > /dev/null; then
-        echo "PASS: test_is_stow_managed_detects_direct_symlink"
+    if is_dotfiles_managed "$TEST_HOME/.zshrc"; then
+        echo "PASS: test_is_dotfiles_managed_detects_direct_symlink"
     else
-        echo "FAIL: test_is_stow_managed_detects_direct_symlink"
-        echo "  Expected is_stow_managed to return true"
+        echo "FAIL: test_is_dotfiles_managed_detects_direct_symlink"
+        echo "  Expected is_dotfiles_managed to return true"
     fi
 
     teardown
 }
 
-test_is_stow_managed_detects_parent_symlink() {
+test_is_dotfiles_managed_detects_parent_symlink() {
     setup
 
     # Create a stow-managed directory symlink
@@ -146,11 +129,11 @@ test_is_stow_managed_detects_parent_symlink() {
     mkdir -p "$TEST_HOME/.config"
     ln -s "$TEST_DOTFILES/nvim/.config/nvim" "$TEST_HOME/.config/nvim"
 
-    if is_stow_managed "$TEST_HOME/.config/nvim/init.lua" > /dev/null; then
-        echo "PASS: test_is_stow_managed_detects_parent_symlink"
+    if is_dotfiles_managed "$TEST_HOME/.config/nvim/init.lua"; then
+        echo "PASS: test_is_dotfiles_managed_detects_parent_symlink"
     else
-        echo "FAIL: test_is_stow_managed_detects_parent_symlink"
-        echo "  Expected is_stow_managed to return true for file under symlinked dir"
+        echo "FAIL: test_is_dotfiles_managed_detects_parent_symlink"
+        echo "  Expected is_dotfiles_managed to return true for file under symlinked dir"
     fi
 
     teardown
@@ -274,8 +257,8 @@ test_create_directories_creates_config
 test_create_directories_creates_ssh_sockets
 test_create_directories_sets_ssh_permissions
 test_deploy_packages_creates_symlinks
-test_is_stow_managed_detects_direct_symlink
-test_is_stow_managed_detects_parent_symlink
+test_is_dotfiles_managed_detects_direct_symlink
+test_is_dotfiles_managed_detects_parent_symlink
 test_deploy_packages_handles_nested_config
 test_deploy_packages_warns_on_missing_package
 test_deploy_packages_detects_file_instead_of_directory

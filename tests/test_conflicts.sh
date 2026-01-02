@@ -11,22 +11,16 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 source "$ROOT_DIR/lib/common.sh"
 source "$ROOT_DIR/lib/config.sh"
 source "$ROOT_DIR/lib/conflicts.sh"
-
-# Test variables
-TEST_HOME=""
-TEST_DOTFILES=""
+# shellcheck source=tests/helpers.sh
+source "$SCRIPT_DIR/helpers.sh"
 
 setup() {
-    TEST_HOME=$(mktemp -d)
-    TEST_DOTFILES=$(mktemp -d)
-
-    # Create mock package structure
-    mkdir -p "$TEST_DOTFILES/zsh"
-    touch "$TEST_DOTFILES/zsh/.zshrc"
+    setup_test_env
+    create_mock_package "zsh" ".zshrc"
 }
 
 teardown() {
-    rm -rf "$TEST_HOME" "$TEST_DOTFILES"
+    teardown_test_env
 }
 
 test_detects_file_conflict() {

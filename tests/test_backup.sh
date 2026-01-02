@@ -11,27 +11,15 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 source "$ROOT_DIR/lib/common.sh"
 source "$ROOT_DIR/lib/config.sh"
 source "$ROOT_DIR/lib/backup.sh"
-
-# Test variables
-TEST_HOME=""
-ORIGINAL_HOME=""
-ORIGINAL_DOTFILES_DIR=""
+# shellcheck source=tests/helpers.sh
+source "$SCRIPT_DIR/helpers.sh"
 
 setup() {
-    TEST_HOME=$(mktemp -d)
-    ORIGINAL_HOME="$HOME"
-    ORIGINAL_DOTFILES_DIR="$DOTFILES_DIR"
-
-    # Override HOME and DOTFILES_DIR for testing
-    HOME="$TEST_HOME"
-    DOTFILES_DIR="$TEST_HOME/.dotfiles"
-    mkdir -p "$DOTFILES_DIR"
+    setup_test_env true
 }
 
 teardown() {
-    HOME="$ORIGINAL_HOME"
-    DOTFILES_DIR="$ORIGINAL_DOTFILES_DIR"
-    rm -rf "$TEST_HOME"
+    teardown_test_env
 }
 
 test_needs_backup_returns_true_for_regular_file() {
