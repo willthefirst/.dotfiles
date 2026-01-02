@@ -43,11 +43,8 @@ create_backup() {
         if file_or_link_exists "$file" && ! is_dotfiles_managed "$file"; then
             local backup_path
             backup_path="$backup_dir/$(basename "$file")"
-            if [[ -L "$file" ]]; then
-                cp -rL "$file" "$backup_path" 2>/dev/null || cp -r "$file" "$backup_path"
-            else
-                cp -r "$file" "$backup_path"
-            fi
+            # Use -RP to preserve symlinks without following (avoids errors on broken symlinks)
+            cp -RP "$file" "$backup_path" 2>/dev/null || true
             ((backed_up++))
         fi
     done

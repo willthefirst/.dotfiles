@@ -109,9 +109,37 @@ test_create_backup_creates_directory() {
     teardown
 }
 
+test_create_backup_handles_broken_symlinks() {
+    setup
+
+    # Create a directory with a broken symlink inside
+    mkdir -p "$TEST_HOME/.config/testdir"
+    echo "valid content" > "$TEST_HOME/.config/testdir/valid.txt"
+    ln -s "/nonexistent/path/file.txt" "$TEST_HOME/.config/testdir/broken_link"
+
+    # Run backup - should not fail
+    if create_backup "$TEST_HOME/.config/testdir" > /dev/null 2>&1; then
+        # Check that a backup directory was created
+        backup_dir=$(find "$TEST_HOME" -maxdepth 1 -type d -name ".dotfiles-backup-*" 2>/dev/null | head -1)
+
+        if [[ -n "$backup_dir" && -d "$backup_dir/testdir" ]]; then
+            echo "PASS: test_create_backup_handles_broken_symlinks"
+        else
+            echo "FAIL: test_create_backup_handles_broken_symlinks"
+            echo "  Backup succeeded but directory not found"
+        fi
+    else
+        echo "FAIL: test_create_backup_handles_broken_symlinks"
+        echo "  create_backup failed on directory with broken symlink"
+    fi
+
+    teardown
+}
+
 # Run all tests
 test_needs_backup_returns_true_for_regular_file
 test_needs_backup_returns_false_for_stow_managed
 test_needs_backup_returns_false_when_nothing_exists
 test_needs_backup_returns_true_for_external_symlink
 test_create_backup_creates_directory
+test_create_backup_handles_broken_symlinks
