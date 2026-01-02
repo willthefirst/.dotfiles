@@ -22,124 +22,65 @@ teardown() {
     teardown_test_env
 }
 
+# =============================================================================
+# Test functions - each returns 0 for pass, non-zero for fail
+# =============================================================================
+
 test_needs_backup_returns_true_for_regular_file() {
-    setup
-
-    # Create a regular file
     touch "$TEST_HOME/.zshrc"
-
-    if needs_backup "$TEST_HOME/.zshrc"; then
-        echo "PASS: test_needs_backup_returns_true_for_regular_file"
-    else
-        echo "FAIL: test_needs_backup_returns_true_for_regular_file"
-        echo "  Expected needs_backup to return true for regular file"
-    fi
-
-    teardown
+    assert "Expected needs_backup to return true for regular file" needs_backup "$TEST_HOME/.zshrc"
 }
 
 test_needs_backup_returns_false_for_stow_managed() {
-    setup
-
-    # Create a symlink pointing into DOTFILES_DIR
     mkdir -p "$DOTFILES_DIR/zsh"
     touch "$DOTFILES_DIR/zsh/.zshrc"
     ln -s "$DOTFILES_DIR/zsh/.zshrc" "$TEST_HOME/.zshrc"
 
-    if ! needs_backup "$TEST_HOME/.zshrc"; then
-        echo "PASS: test_needs_backup_returns_false_for_stow_managed"
-    else
-        echo "FAIL: test_needs_backup_returns_false_for_stow_managed"
-        echo "  Expected needs_backup to return false for stow-managed symlink"
-    fi
-
-    teardown
+    assert_fails "Expected needs_backup to return false for stow-managed symlink" needs_backup "$TEST_HOME/.zshrc"
 }
 
 test_needs_backup_returns_false_when_nothing_exists() {
-    setup
-
-    if ! needs_backup "$TEST_HOME/.nonexistent"; then
-        echo "PASS: test_needs_backup_returns_false_when_nothing_exists"
-    else
-        echo "FAIL: test_needs_backup_returns_false_when_nothing_exists"
-        echo "  Expected needs_backup to return false for non-existent file"
-    fi
-
-    teardown
+    assert_fails "Expected needs_backup to return false for non-existent file" needs_backup "$TEST_HOME/.nonexistent"
 }
 
 test_needs_backup_returns_true_for_external_symlink() {
-    setup
-
-    # Create a symlink pointing outside DOTFILES_DIR
     ln -s /some/other/path "$TEST_HOME/.zshrc"
-
-    if needs_backup "$TEST_HOME/.zshrc"; then
-        echo "PASS: test_needs_backup_returns_true_for_external_symlink"
-    else
-        echo "FAIL: test_needs_backup_returns_true_for_external_symlink"
-        echo "  Expected needs_backup to return true for external symlink"
-    fi
-
-    teardown
+    assert "Expected needs_backup to return true for external symlink" needs_backup "$TEST_HOME/.zshrc"
 }
 
 test_create_backup_creates_directory() {
-    setup
-
-    # Create a file to backup
-    touch "$TEST_HOME/.zshrc"
     echo "test content" > "$TEST_HOME/.zshrc"
 
-    # Run backup (output not needed, just side effect)
     create_backup "$TEST_HOME/.zshrc" > /dev/null 2>&1
 
-    # Check that a backup directory was created
+    local backup_dir
     backup_dir=$(find "$TEST_HOME" -maxdepth 1 -type d -name ".dotfiles-backup-*" 2>/dev/null | head -1)
 
-    if [[ -n "$backup_dir" && -f "$backup_dir/.zshrc" ]]; then
-        echo "PASS: test_create_backup_creates_directory"
-    else
-        echo "FAIL: test_create_backup_creates_directory"
-        echo "  Expected backup directory with .zshrc file"
-        echo "  Backup dir: $backup_dir"
-    fi
-
-    teardown
+    assert "Expected backup directory with .zshrc file" test -n "$backup_dir" -a -f "$backup_dir/.zshrc"
 }
 
 test_create_backup_handles_broken_symlinks() {
-    setup
-
-    # Create a directory with a broken symlink inside
     mkdir -p "$TEST_HOME/.config/testdir"
     echo "valid content" > "$TEST_HOME/.config/testdir/valid.txt"
     ln -s "/nonexistent/path/file.txt" "$TEST_HOME/.config/testdir/broken_link"
 
-    # Run backup - should not fail
-    if create_backup "$TEST_HOME/.config/testdir" > /dev/null 2>&1; then
-        # Check that a backup directory was created
-        backup_dir=$(find "$TEST_HOME" -maxdepth 1 -type d -name ".dotfiles-backup-*" 2>/dev/null | head -1)
-
-        if [[ -n "$backup_dir" && -d "$backup_dir/testdir" ]]; then
-            echo "PASS: test_create_backup_handles_broken_symlinks"
-        else
-            echo "FAIL: test_create_backup_handles_broken_symlinks"
-            echo "  Backup succeeded but directory not found"
-        fi
-    else
-        echo "FAIL: test_create_backup_handles_broken_symlinks"
+    create_backup "$TEST_HOME/.config/testdir" > /dev/null 2>&1 || {
         echo "  create_backup failed on directory with broken symlink"
-    fi
+        return 1
+    }
 
-    teardown
+    local backup_dir
+    backup_dir=$(find "$TEST_HOME" -maxdepth 1 -type d -name ".dotfiles-backup-*" 2>/dev/null | head -1)
+
+    assert "Backup succeeded but directory not found" test -n "$backup_dir" -a -d "$backup_dir/testdir"
 }
 
+# =============================================================================
 # Run all tests
-test_needs_backup_returns_true_for_regular_file
-test_needs_backup_returns_false_for_stow_managed
-test_needs_backup_returns_false_when_nothing_exists
-test_needs_backup_returns_true_for_external_symlink
-test_create_backup_creates_directory
-test_create_backup_handles_broken_symlinks
+# =============================================================================
+run_test test_needs_backup_returns_true_for_regular_file
+run_test test_needs_backup_returns_false_for_stow_managed
+run_test test_needs_backup_returns_false_when_nothing_exists
+run_test test_needs_backup_returns_true_for_external_symlink
+run_test test_create_backup_creates_directory
+run_test test_create_backup_handles_broken_symlinks

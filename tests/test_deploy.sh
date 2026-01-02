@@ -25,184 +25,75 @@ teardown() {
     teardown_test_env
 }
 
+# =============================================================================
+# Test functions - each returns 0 for pass, non-zero for fail
+# =============================================================================
+
 test_create_directories_creates_config() {
-    setup
-
-    # Remove .config if it exists
     rm -rf "$TEST_HOME/.config"
-
     create_directories > /dev/null 2>&1
-
-    if [[ -d "$TEST_HOME/.config" ]]; then
-        echo "PASS: test_create_directories_creates_config"
-    else
-        echo "FAIL: test_create_directories_creates_config"
-        echo "  Expected .config directory to be created"
-    fi
-
-    teardown
+    assert_dir_exists "$TEST_HOME/.config"
 }
 
 test_create_directories_creates_ssh_sockets() {
-    setup
-
     create_directories > /dev/null 2>&1
-
-    if [[ -d "$TEST_HOME/.ssh/sockets" ]]; then
-        echo "PASS: test_create_directories_creates_ssh_sockets"
-    else
-        echo "FAIL: test_create_directories_creates_ssh_sockets"
-        echo "  Expected .ssh/sockets directory to be created"
-    fi
-
-    teardown
+    assert_dir_exists "$TEST_HOME/.ssh/sockets"
 }
 
 test_create_directories_sets_ssh_permissions() {
-    setup
-
     create_directories > /dev/null 2>&1
-
-    local perms
-    perms=$(stat -f "%Lp" "$TEST_HOME/.ssh" 2>/dev/null || stat -c "%a" "$TEST_HOME/.ssh" 2>/dev/null)
-
-    if [[ "$perms" == "700" ]]; then
-        echo "PASS: test_create_directories_sets_ssh_permissions"
-    else
-        echo "FAIL: test_create_directories_sets_ssh_permissions"
-        echo "  Expected permissions 700, got: $perms"
-    fi
-
-    teardown
+    assert_permissions "$TEST_HOME/.ssh" "700"
 }
 
 test_deploy_packages_creates_symlinks() {
-    setup
-
-    # Create a simple package
     mkdir -p "$TEST_DOTFILES/zsh"
     echo "# test zshrc" > "$TEST_DOTFILES/zsh/.zshrc"
 
-    # Override PACKAGES for this test
-    local PACKAGES=(zsh)
-
-    # Deploy the package
-    if deploy_packages "$TEST_DOTFILES" "zsh" > /dev/null 2>&1; then
-        if [[ -L "$TEST_HOME/.zshrc" ]]; then
-            echo "PASS: test_deploy_packages_creates_symlinks"
-        else
-            echo "FAIL: test_deploy_packages_creates_symlinks"
-            echo "  Expected .zshrc symlink to be created"
-        fi
-    else
-        echo "FAIL: test_deploy_packages_creates_symlinks"
-        echo "  deploy_packages failed"
-    fi
-
-    teardown
+    deploy_packages "$TEST_DOTFILES" "zsh" > /dev/null 2>&1 || return 1
+    assert "Expected .zshrc symlink" test -L "$TEST_HOME/.zshrc"
 }
 
 test_is_dotfiles_managed_detects_direct_symlink() {
-    setup
-
-    # Create a stow-managed symlink
     mkdir -p "$TEST_DOTFILES/zsh"
     touch "$TEST_DOTFILES/zsh/.zshrc"
     ln -s "$TEST_DOTFILES/zsh/.zshrc" "$TEST_HOME/.zshrc"
 
-    if is_dotfiles_managed "$TEST_HOME/.zshrc"; then
-        echo "PASS: test_is_dotfiles_managed_detects_direct_symlink"
-    else
-        echo "FAIL: test_is_dotfiles_managed_detects_direct_symlink"
-        echo "  Expected is_dotfiles_managed to return true"
-    fi
-
-    teardown
+    assert "Expected is_dotfiles_managed to return true" is_dotfiles_managed "$TEST_HOME/.zshrc"
 }
 
 test_is_dotfiles_managed_detects_parent_symlink() {
-    setup
-
-    # Create a stow-managed directory symlink
     mkdir -p "$TEST_DOTFILES/nvim/.config/nvim"
     touch "$TEST_DOTFILES/nvim/.config/nvim/init.lua"
     mkdir -p "$TEST_HOME/.config"
     ln -s "$TEST_DOTFILES/nvim/.config/nvim" "$TEST_HOME/.config/nvim"
 
-    if is_dotfiles_managed "$TEST_HOME/.config/nvim/init.lua"; then
-        echo "PASS: test_is_dotfiles_managed_detects_parent_symlink"
-    else
-        echo "FAIL: test_is_dotfiles_managed_detects_parent_symlink"
-        echo "  Expected is_dotfiles_managed to return true for file under symlinked dir"
-    fi
-
-    teardown
+    assert "Expected is_dotfiles_managed to return true for file under symlinked dir" \
+        is_dotfiles_managed "$TEST_HOME/.config/nvim/init.lua"
 }
 
 test_deploy_packages_handles_nested_config() {
-    setup
-
-    # Create a package with nested .config structure (like ghostty)
     mkdir -p "$TEST_DOTFILES/ghostty/.config/ghostty"
     echo "# test ghostty config" > "$TEST_DOTFILES/ghostty/.config/ghostty/config"
 
-    # Deploy the package (with --no-folding, directory is real, files are symlinks)
-    if deploy_packages "$TEST_DOTFILES" "ghostty" > /dev/null 2>&1; then
-        if [[ -L "$TEST_HOME/.config/ghostty/config" ]]; then
-            echo "PASS: test_deploy_packages_handles_nested_config"
-        else
-            echo "FAIL: test_deploy_packages_handles_nested_config"
-            echo "  Expected .config/ghostty/config symlink to be created"
-        fi
-    else
-        echo "FAIL: test_deploy_packages_handles_nested_config"
-        echo "  deploy_packages failed"
-    fi
-
-    teardown
+    deploy_packages "$TEST_DOTFILES" "ghostty" > /dev/null 2>&1 || return 1
+    assert "Expected .config/ghostty/config symlink" test -L "$TEST_HOME/.config/ghostty/config"
 }
 
 test_deploy_packages_warns_on_missing_package() {
-    setup
-
-    # Try to deploy a non-existent package
     local output
     output=$(deploy_packages "$TEST_DOTFILES" "nonexistent" 2>&1)
-
-    if echo "$output" | grep -q "Package not found"; then
-        echo "PASS: test_deploy_packages_warns_on_missing_package"
-    else
-        echo "FAIL: test_deploy_packages_warns_on_missing_package"
-        echo "  Expected warning about missing package"
-    fi
-
-    teardown
+    assert_contains "$output" "Package not found"
 }
 
 test_deploy_packages_detects_file_instead_of_directory() {
-    setup
-
-    # Create a file where a directory should be
     echo "# misconfigured" > "$TEST_DOTFILES/ghostty-config"
 
-    # Try to deploy it
     local output
     output=$(deploy_packages "$TEST_DOTFILES" "ghostty-config" 2>&1)
-
-    if echo "$output" | grep -q "Package not found"; then
-        echo "PASS: test_deploy_packages_detects_file_instead_of_directory"
-    else
-        echo "FAIL: test_deploy_packages_detects_file_instead_of_directory"
-        echo "  Expected warning about file vs directory"
-    fi
-
-    teardown
+    assert_contains "$output" "Package not found"
 }
 
 test_config_has_content() {
-    setup
-
-    # Create a config with only template/comment content
     mkdir -p "$TEST_DOTFILES/ghostty/.config/ghostty"
     cat > "$TEST_DOTFILES/ghostty/.config/ghostty/config" <<'EOF'
 # This is the configuration file for Ghostty.
@@ -211,54 +102,37 @@ test_config_has_content() {
 # All options are commented out
 EOF
 
-    # Deploy the package
     deploy_packages "$TEST_DOTFILES" "ghostty" > /dev/null 2>&1
 
-    # Check if the deployed config has actual content (non-comment, non-blank lines)
     local content_lines
     content_lines=$(grep -v '^#' "$TEST_HOME/.config/ghostty/config" | grep -cv '^[[:space:]]*$')
 
-    if [[ "$content_lines" -eq 0 ]]; then
-        echo "PASS: test_config_has_content"
-    else
-        echo "FAIL: test_config_has_content"
-        echo "  Expected 0 content lines in template config, got: $content_lines"
-    fi
-
-    teardown
+    assert "Expected 0 content lines in template config, got: $content_lines" \
+        test "$content_lines" -eq 0
 }
 
 test_no_broken_symlinks_in_app_support() {
-    setup
-
-    # Create a scenario: broken symlink in "Application Support" pointing to old dotfiles location
     local app_support="$TEST_HOME/Library/Application Support/com.test.app"
     mkdir -p "$app_support"
     ln -s "$TEST_HOME/.dotfiles/nonexistent-config" "$app_support/config"
 
-    # Check for broken symlinks
     local broken_links
     broken_links=$(find "$TEST_HOME/Library/Application Support" -type l ! -exec test -e {} \; -print 2>/dev/null | wc -l)
 
-    if [[ "$broken_links" -gt 0 ]]; then
-        echo "PASS: test_no_broken_symlinks_in_app_support"
-    else
-        echo "FAIL: test_no_broken_symlinks_in_app_support"
-        echo "  Expected to detect broken symlinks, found: $broken_links"
-    fi
-
-    teardown
+    assert "Expected to detect broken symlinks" test "$broken_links" -gt 0
 }
 
+# =============================================================================
 # Run all tests
-test_create_directories_creates_config
-test_create_directories_creates_ssh_sockets
-test_create_directories_sets_ssh_permissions
-test_deploy_packages_creates_symlinks
-test_is_dotfiles_managed_detects_direct_symlink
-test_is_dotfiles_managed_detects_parent_symlink
-test_deploy_packages_handles_nested_config
-test_deploy_packages_warns_on_missing_package
-test_deploy_packages_detects_file_instead_of_directory
-test_config_has_content
-test_no_broken_symlinks_in_app_support
+# =============================================================================
+run_test test_create_directories_creates_config
+run_test test_create_directories_creates_ssh_sockets
+run_test test_create_directories_sets_ssh_permissions
+run_test test_deploy_packages_creates_symlinks
+run_test test_is_dotfiles_managed_detects_direct_symlink
+run_test test_is_dotfiles_managed_detects_parent_symlink
+run_test test_deploy_packages_handles_nested_config
+run_test test_deploy_packages_warns_on_missing_package
+run_test test_deploy_packages_detects_file_instead_of_directory
+run_test test_config_has_content
+run_test test_no_broken_symlinks_in_app_support

@@ -23,112 +23,61 @@ teardown() {
     teardown_test_env
 }
 
-test_detects_file_conflict() {
-    setup
+# =============================================================================
+# Test functions - each returns 0 for pass, non-zero for fail
+# =============================================================================
 
-    # Create conflicting file
+test_detects_file_conflict() {
     touch "$TEST_HOME/.zshrc"
 
-    # Run conflict detection
     local conflicts
     conflicts=$(get_package_conflicts "$TEST_DOTFILES/zsh" "$TEST_HOME")
 
-    # Assert
-    if [[ "$conflicts" == *"file:$TEST_HOME/.zshrc"* ]]; then
-        echo "PASS: test_detects_file_conflict"
-    else
-        echo "FAIL: test_detects_file_conflict"
-        echo "  Expected conflict for $TEST_HOME/.zshrc"
-        echo "  Got: $conflicts"
-    fi
-
-    teardown
+    assert_contains "$conflicts" "file:$TEST_HOME/.zshrc"
 }
 
 test_detects_symlink_conflict() {
-    setup
-
-    # Create conflicting symlink pointing elsewhere
     ln -s /some/other/path "$TEST_HOME/.zshrc"
 
     local conflicts
     conflicts=$(get_package_conflicts "$TEST_DOTFILES/zsh" "$TEST_HOME")
 
-    if [[ "$conflicts" == *"symlink:$TEST_HOME/.zshrc"* ]]; then
-        echo "PASS: test_detects_symlink_conflict"
-    else
-        echo "FAIL: test_detects_symlink_conflict"
-        echo "  Expected symlink conflict"
-        echo "  Got: $conflicts"
-    fi
-
-    teardown
+    assert_contains "$conflicts" "symlink:$TEST_HOME/.zshrc"
 }
 
 test_no_conflict_when_correctly_linked() {
-    setup
-
-    # Create correct symlink
     ln -s "$TEST_DOTFILES/zsh/.zshrc" "$TEST_HOME/.zshrc"
 
     local conflicts
     conflicts=$(get_package_conflicts "$TEST_DOTFILES/zsh" "$TEST_HOME")
 
-    if [[ -z "$conflicts" ]]; then
-        echo "PASS: test_no_conflict_when_correctly_linked"
-    else
-        echo "FAIL: test_no_conflict_when_correctly_linked"
-        echo "  Expected no conflicts, got: $conflicts"
-    fi
-
-    teardown
+    assert "Expected no conflicts, got: $conflicts" test -z "$conflicts"
 }
 
 test_no_conflict_when_nothing_exists() {
-    setup
-
-    # No file or symlink exists
     local conflicts
     conflicts=$(get_package_conflicts "$TEST_DOTFILES/zsh" "$TEST_HOME")
 
-    if [[ -z "$conflicts" ]]; then
-        echo "PASS: test_no_conflict_when_nothing_exists"
-    else
-        echo "FAIL: test_no_conflict_when_nothing_exists"
-        echo "  Expected no conflicts, got: $conflicts"
-    fi
-
-    teardown
+    assert "Expected no conflicts, got: $conflicts" test -z "$conflicts"
 }
 
 test_detects_directory_symlink_conflict() {
-    setup
-
-    # Create a nested package structure
     mkdir -p "$TEST_DOTFILES/nvim/.config/nvim"
     touch "$TEST_DOTFILES/nvim/.config/nvim/init.lua"
     mkdir -p "$TEST_HOME/.config"
-
-    # Create conflicting symlink at .config/nvim pointing elsewhere
     ln -s /some/other/path "$TEST_HOME/.config/nvim"
 
     local conflicts
     conflicts=$(get_package_conflicts "$TEST_DOTFILES/nvim" "$TEST_HOME")
 
-    if [[ "$conflicts" == *"symlink:$TEST_HOME/.config/nvim"* ]]; then
-        echo "PASS: test_detects_directory_symlink_conflict"
-    else
-        echo "FAIL: test_detects_directory_symlink_conflict"
-        echo "  Expected directory symlink conflict"
-        echo "  Got: $conflicts"
-    fi
-
-    teardown
+    assert_contains "$conflicts" "symlink:$TEST_HOME/.config/nvim"
 }
 
+# =============================================================================
 # Run all tests
-test_detects_file_conflict
-test_detects_symlink_conflict
-test_no_conflict_when_correctly_linked
-test_no_conflict_when_nothing_exists
-test_detects_directory_symlink_conflict
+# =============================================================================
+run_test test_detects_file_conflict
+run_test test_detects_symlink_conflict
+run_test test_no_conflict_when_correctly_linked
+run_test test_no_conflict_when_nothing_exists
+run_test test_detects_directory_symlink_conflict

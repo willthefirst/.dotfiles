@@ -110,3 +110,87 @@ assert_dir_exists() {
     echo "FAIL: Expected directory at $path"
     return 1
 }
+
+# Get file permissions in octal (portable across macOS and Linux)
+# Usage: get_file_permissions "/path/to/file"
+get_file_permissions() {
+    local path="$1"
+    if [[ "$(uname)" == "Darwin" ]]; then
+        stat -f "%Lp" "$path"
+    else
+        stat -c "%a" "$path"
+    fi
+}
+
+# Assert file has expected permissions
+# Usage: assert_permissions "/path/to/file" "700"
+assert_permissions() {
+    local path="$1"
+    local expected="$2"
+    local actual
+    actual=$(get_file_permissions "$path")
+    if [[ "$actual" == "$expected" ]]; then
+        return 0
+    fi
+    echo "  Expected permissions $expected on $path, got $actual"
+    return 1
+}
+
+# =============================================================================
+# Test runner helpers - reduce boilerplate in test functions
+# =============================================================================
+
+# Run a test with automatic setup/teardown and PASS/FAIL reporting
+# Usage: run_test test_function_name
+# The test function should return 0 for pass, non-zero for fail
+# Error messages from assert_* functions are captured and displayed on failure
+run_test() {
+    local test_name="$1"
+    local output
+    setup
+    if output=$("$test_name" 2>&1); then
+        echo "PASS: $test_name"
+    else
+        echo "FAIL: $test_name"
+        [[ -n "$output" ]] && echo "$output"
+    fi
+    teardown
+}
+
+# Assert a condition is true
+# Usage: assert "description" command [args...]
+# Example: assert "directory exists" test -d "$path"
+assert() {
+    local msg="$1"
+    shift
+    if "$@"; then
+        return 0
+    fi
+    echo "  $msg"
+    return 1
+}
+
+# Assert a command fails (returns non-zero)
+# Usage: assert_fails "description" command [args...]
+# Example: assert_fails "file does not exist" test -f "$path"
+assert_fails() {
+    local msg="$1"
+    shift
+    if ! "$@"; then
+        return 0
+    fi
+    echo "  $msg"
+    return 1
+}
+
+# Assert output contains expected string
+# Usage: assert_contains "$output" "expected"
+assert_contains() {
+    local output="$1"
+    local expected="$2"
+    if echo "$output" | grep -q "$expected"; then
+        return 0
+    fi
+    echo "  Expected output to contain: $expected"
+    return 1
+}
