@@ -11,6 +11,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Logging functions
+log_info() { echo -e "  $1"; }
 log_step() { echo -e "  ${GREEN}→${NC} $1"; }
 log_ok() { echo -e "  ${GREEN}✓${NC} $1"; }
 log_warn() { echo -e "  ${YELLOW}!${NC} $1"; }

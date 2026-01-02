@@ -8,7 +8,7 @@
 
 install_nvim() {
     if is_macos; then
-        pkg_install neovim
+        pkg_installed neovim || pkg_install neovim
     elif is_linux; then
         # Install latest neovim appimage for newer version than apt
         local arch
@@ -19,13 +19,13 @@ install_nvim() {
         fi
         local nvim_url="https://github.com/neovim/neovim/releases/latest/download/${nvim_file}"
 
-        log_info "  Downloading neovim appimage..."
+        log_step "Downloading neovim appimage..."
         if ! curl -fLo /tmp/nvim.appimage "$nvim_url"; then
             log_error "  Failed to download neovim appimage"
             return 1
         fi
         chmod +x /tmp/nvim.appimage
-        log_info "  Installing to /usr/local/bin/nvim..."
+        log_step "Installing to /usr/local/bin/nvim..."
         sudo mv /tmp/nvim.appimage /usr/local/bin/nvim
     fi
 }
