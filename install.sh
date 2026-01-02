@@ -27,7 +27,6 @@ source "$SCRIPT_DIR/lib/verify.sh"
 # CLI flags
 FORCE_MODE=false
 ADOPT_MODE=false
-INSTALL_WARNINGS=false
 
 # Parse command line arguments
 parse_args() {
@@ -66,7 +65,6 @@ main() {
     create_backup "${BACKUP_FILES[@]}"
     create_directories
     deploy_base
-    deploy_work || INSTALL_WARNINGS=true
     verify_installation
     print_next_steps
 }

@@ -78,7 +78,7 @@ deploy_packages() {
 # Deploy base dotfiles
 deploy_base() {
     echo ""
-    echo "Deploying base dotfiles..."
+    echo "Deploying dotfiles..."
 
     if [[ ! -d "$DOTFILES_DIR" ]]; then
         log_error "Cannot access $DOTFILES_DIR"
@@ -101,31 +101,5 @@ deploy_base() {
     # Deploy packages
     if ! deploy_packages "$DOTFILES_DIR" "${PACKAGES[@]}"; then
         exit 1
-    fi
-}
-
-# Deploy work overlay (if present)
-deploy_work() {
-    if [[ -d "$WORK_DOTFILES_DIR" ]]; then
-        echo ""
-        echo "Deploying work overlay..."
-
-        # Check for conflicts (work overlay adds files, shouldn't conflict much)
-        if [[ "${FORCE_MODE:-false}" != "true" && "${ADOPT_MODE:-false}" != "true" ]]; then
-            if ! check_all_conflicts "$WORK_DOTFILES_DIR" "${PACKAGES[@]}"; then
-                log_warn "Work overlay has conflicts. Skipping work overlay deployment."
-                return 1
-            fi
-        fi
-
-        # Handle conflicts if in force mode
-        if [[ "${FORCE_MODE:-false}" == "true" ]]; then
-            handle_conflicts "$WORK_DOTFILES_DIR" "${PACKAGES[@]}"
-        fi
-
-        # Deploy packages
-        if ! deploy_packages "$WORK_DOTFILES_DIR" "${PACKAGES[@]}"; then
-            return 1
-        fi
     fi
 }

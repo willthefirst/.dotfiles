@@ -4,29 +4,7 @@ Personal dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
 ## Overview
 
-This repository contains portable, base configuration files. Work-specific settings are loaded from a separate overlay repository (`~/.dotfiles-stripe`) when present, keeping this config clean and shareable.
-
-```mermaid
-graph LR
-    subgraph "Base Dotfiles (~/.dotfiles)"
-        A[.zshrc]
-        B[.gitconfig]
-        C[.ssh/config]
-        D[nvim config]
-    end
-
-    subgraph "Work Overlay (~/.dotfiles-stripe)"
-        E[.zshrc.work]
-        F[.gitconfig.work]
-        G[.ssh/config.work]
-        H[plugins-work/]
-    end
-
-    A -->|sources| E
-    B -->|includes| F
-    C -->|includes| G
-    D -->|imports| H
-```
+This repository contains portable, base configuration files. Configs include hooks for optional overlays (`.zshrc.work`, `.gitconfig.work`, etc.) that can be managed by separate repositories.
 
 ## Structure
 
@@ -50,15 +28,15 @@ graph LR
 ├── .github/workflows/      # CI/CD
 │   └── ci.yml              # GitHub Actions workflow
 ├── zsh/
-│   └── .zshrc              # Shell config (sources .zshrc.work)
+│   └── .zshrc              # Shell config
 ├── git/
-│   ├── .gitconfig          # Git config (includes .gitconfig.work)
+│   ├── .gitconfig          # Git config
 │   ├── .gitconfig.personal # Personal repo signing (1Password SSH)
 │   └── .gitignore_global   # Global gitignore
 ├── nvim/
-│   └── .config/nvim/       # Neovim config (imports plugins-work/)
+│   └── .config/nvim/       # Neovim config
 ├── ssh/
-│   └── .ssh/config         # SSH config (includes config.work)
+│   └── .ssh/config         # SSH config
 └── ghostty/
     └── .config/ghostty/    # Ghostty terminal config
 ```
@@ -126,28 +104,11 @@ flowchart TD
     H -->|Yes, --force| I[Remove conflicts]
     H -->|Yes, --adopt| J[Adopt into stow]
     H -->|Yes, neither| K[Exit with options]
-    H -->|No| L[Deploy base packages]
+    H -->|No| L[Deploy packages]
     I --> L
     J --> L
-    L --> M{Work overlay exists?}
-    M -->|Yes| N[Deploy work overlay]
-    M -->|No| O[Skip work overlay]
-    N --> P[Verify installation]
-    O --> P
-    P --> Q[Done]
-```
-
-### With Work Overlay
-
-```bash
-# 1. Install base dotfiles first (see above)
-
-# 2. Clone work overlay
-git clone <your-work-repo-url> ~/.dotfiles-stripe
-
-# 3. Re-run install script (it will detect and deploy work overlay)
-cd ~/.dotfiles
-./install.sh
+    L --> M[Verify installation]
+    M --> N[Done]
 ```
 
 ## Make Commands
@@ -259,8 +220,6 @@ GitHub Actions runs on every push and PR:
 
 ## Making Changes
 
-### Base Config Changes
-
 ```bash
 # Edit configs directly (they're symlinked)
 nvim ~/.zshrc
@@ -270,27 +229,10 @@ cd ~/.dotfiles
 git add -A && git commit -m "Update zsh config" && git push
 ```
 
-### Work Overlay Changes
-
-```bash
-# Edit work configs
-nvim ~/.zshrc.work
-
-# Commit and push
-cd ~/.dotfiles-stripe
-git add -A && git commit -m "Update work aliases" && git push
-```
-
 ## Updating
 
 ```bash
-# Update base dotfiles
 cd ~/.dotfiles && git pull
-
-# Update work overlay
-cd ~/.dotfiles-stripe && git pull
-
-# Reload shell
 source ~/.zshrc
 ```
 
@@ -318,10 +260,6 @@ make uninstall
 # Or manually
 cd ~/.dotfiles
 stow -D -t ~ zsh git nvim ssh ghostty
-
-# Remove work overlay symlinks
-cd ~/.dotfiles-stripe
-stow -D -t ~ zsh git ssh nvim
 ```
 
 ## Adding New Configs
@@ -347,16 +285,6 @@ stow -D -t ~ zsh git ssh nvim
 
 3. Add to `PACKAGES` array in `lib/config.sh`
 4. Deploy: `./install.sh` or `stow -v -t ~ newapp`
-5. Add overlay support by adding to the config:
-
-   ```bash
-   # For shell configs
-   [[ -f ~/.newapprc.work ]] && source ~/.newapprc.work
-
-   # For git-style configs
-   [include]
-       path = ~/.newapprc.work
-   ```
 
 ## Best Practices
 
@@ -434,16 +362,6 @@ ls -la ~/.zshrc
 # Re-stow (remove and add)
 cd ~/.dotfiles
 stow -D -t ~ zsh && stow -v -t ~ zsh
-```
-
-### Work overlay not loading
-
-```bash
-# Check if overlay file exists
-ls -la ~/.zshrc.work
-
-# Check if base config sources it
-grep "zshrc.work" ~/.zshrc
 ```
 
 ### Application not loading config preferences

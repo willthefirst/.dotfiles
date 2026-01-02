@@ -6,7 +6,6 @@
 
 # Directory paths
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-WORK_DOTFILES_DIR="${WORK_DOTFILES_DIR:-$HOME/.dotfiles-stripe}"
 
 # Stow packages to deploy
 # shellcheck disable=SC2034
@@ -33,13 +32,4 @@ VERIFY_SYMLINKS=(
     "$HOME/.config/nvim/init.lua"
     "$HOME/.ssh/config"
     "$HOME/.config/ghostty"
-)
-
-# Work overlay files to check
-# shellcheck disable=SC2034
-WORK_FILES=(
-    "$HOME/.zshrc.work"
-    "$HOME/.gitconfig.work"
-    "$HOME/.ssh/config.work"
-    "$HOME/.config/nvim/lua/plugins-work"
 )
