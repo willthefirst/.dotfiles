@@ -73,3 +73,6 @@ alias vim='nvim'
 # Extensions
 # =============================================================================
 [[ -f ~/.zshrc.work ]] && source ~/.zshrc.work
+
+# I AM STRIPE SPECIFIC CONFIG FOR STRIPE LAPTOP, MOVE ME THERE!!!!!
+export PATH=/Users/willm/.rbenv/shims:$PATH
