@@ -163,13 +163,13 @@ test_deploy_packages_handles_nested_config() {
     mkdir -p "$TEST_DOTFILES/ghostty/.config/ghostty"
     echo "# test ghostty config" > "$TEST_DOTFILES/ghostty/.config/ghostty/config"
 
-    # Deploy the package
+    # Deploy the package (with --no-folding, directory is real, files are symlinks)
     if deploy_packages "$TEST_DOTFILES" "ghostty" > /dev/null 2>&1; then
-        if [[ -L "$TEST_HOME/.config/ghostty" ]]; then
+        if [[ -L "$TEST_HOME/.config/ghostty/config" ]]; then
             echo "PASS: test_deploy_packages_handles_nested_config"
         else
             echo "FAIL: test_deploy_packages_handles_nested_config"
-            echo "  Expected .config/ghostty symlink to be created"
+            echo "  Expected .config/ghostty/config symlink to be created"
         fi
     else
         echo "FAIL: test_deploy_packages_handles_nested_config"
