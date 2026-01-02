@@ -67,7 +67,7 @@ deploy_packages() {
 
     # Show missing packages
     for pkg in "${missing_pkgs[@]}"; do
-        log_warn "$pkg (not found)"
+        log_warn "Package not found: $pkg"
     done
 
     return 0
