@@ -54,12 +54,9 @@ is_linux() {
 # Setup phase tracking (set by install.sh for multi-step output)
 SETUP_PHASE=""
 
-# Print section header
+# Print section header (no-op, kept for compatibility)
 print_header() {
-    local title="${1:-Dotfiles}"
-    echo "=============================================="
-    echo " $title"
-    echo "=============================================="
+    :
 }
 
 # Print next steps after installation
