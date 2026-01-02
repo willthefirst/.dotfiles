@@ -4,6 +4,17 @@
 # Conflict detection and resolution for stow packages
 # =============================================================================
 
+# Report symlink conflict if symlink doesn't match expected target
+# Usage: report_symlink_mismatch target_path expected_target
+# Outputs: "symlink:path:actual_target" if mismatch, nothing if matches
+report_symlink_mismatch() {
+    local target_path="$1"
+    local expected_target="$2"
+    if ! symlink_matches "$target_path" "$expected_target"; then
+        echo "symlink:$target_path:$(readlink "$target_path")"
+    fi
+}
+
 # Check if a path is already in the checked array
 # Usage: is_already_checked "path" "${checked_array[@]}"
 is_already_checked() {
@@ -19,7 +30,7 @@ is_already_checked() {
 }
 
 # Check directory for conflicts (handles directory symlinks)
-# Usage: check_directory_conflict pkg_dir target_dir rel_path checked_dirs_ref
+# Usage: check_directory_conflict pkg_dir target_path rel_path
 # Outputs conflict string if found
 check_directory_conflict() {
     local pkg_dir="$1"
@@ -27,12 +38,8 @@ check_directory_conflict() {
     local rel_path="$3"
 
     if [[ -L "$target_path" ]]; then
-        local expected_target="$pkg_dir/$rel_path"
-        if ! symlink_matches "$target_path" "$expected_target"; then
-            echo "symlink:$target_path:$(readlink "$target_path")"
-        fi
+        report_symlink_mismatch "$target_path" "$pkg_dir/$rel_path"
     elif [[ -e "$target_path" && ! -d "$target_path" ]]; then
-        # A file exists where a directory should be
         echo "file:$target_path"
     fi
 }
@@ -75,10 +82,7 @@ check_file_conflict() {
     local rel_path="$3"
 
     if [[ -L "$target_path" ]]; then
-        local expected_target="$pkg_dir/$rel_path"
-        if ! symlink_matches "$target_path" "$expected_target"; then
-            echo "symlink:$target_path:$(readlink "$target_path")"
-        fi
+        report_symlink_mismatch "$target_path" "$pkg_dir/$rel_path"
     elif [[ -e "$target_path" ]]; then
         echo "file:$target_path"
     fi

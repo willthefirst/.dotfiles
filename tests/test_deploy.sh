@@ -214,11 +214,9 @@ EOF
     # Deploy the package
     deploy_packages "$TEST_DOTFILES" "ghostty" > /dev/null 2>&1
 
-    # Check if the deployed config has actual content (non-comment lines)
+    # Check if the deployed config has actual content (non-comment, non-blank lines)
     local content_lines
-    content_lines=$(grep -cv '^#' "$TEST_HOME/.config/ghostty/config" 2>/dev/null | tr -d ' ')
-    # Filter out blank lines from the count by recounting
-    content_lines=$(grep -v '^#' "$TEST_HOME/.config/ghostty/config" | grep -c -v '^[[:space:]]*$' | tr -d ' ')
+    content_lines=$(grep -v '^#' "$TEST_HOME/.config/ghostty/config" | grep -cv '^[[:space:]]*$')
 
     if [[ "$content_lines" -eq 0 ]]; then
         echo "PASS: test_config_has_content"
@@ -240,7 +238,7 @@ test_no_broken_symlinks_in_app_support() {
 
     # Check for broken symlinks
     local broken_links
-    broken_links=$(find "$TEST_HOME/Library/Application Support" -type l ! -exec test -e {} \; -print 2>/dev/null | wc -l | tr -d ' ')
+    broken_links=$(find "$TEST_HOME/Library/Application Support" -type l ! -exec test -e {} \; -print 2>/dev/null | wc -l)
 
     if [[ "$broken_links" -gt 0 ]]; then
         echo "PASS: test_no_broken_symlinks_in_app_support"

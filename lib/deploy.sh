@@ -4,6 +4,11 @@
 # Stow deployment logic
 # =============================================================================
 
+# Filter out LINK: lines from stow output (verbose info we don't need)
+filter_stow_output() {
+    grep -v "^LINK:" || true
+}
+
 # Create required directories with proper permissions
 create_directories() {
     mkdir -p "$HOME/.config"
@@ -44,18 +49,15 @@ deploy_packages() {
 
     for pkg in "${packages[@]}"; do
         if [[ -d "$base_dir/$pkg" ]]; then
-            local stow_output
+            local stow_output filtered_output
             if ! stow_output=$(cd "$base_dir" && stow "${stow_opts[@]}" "$pkg" 2>&1); then
                 echo -e "  ${RED}✗${NC} Failed to stow: $pkg"
-                local error_output
-                error_output=$(echo "$stow_output" | grep -v "^LINK:")
-                [[ -n "$error_output" ]] && echo "$error_output"
+                filtered_output=$(echo "$stow_output" | filter_stow_output)
+                [[ -n "$filtered_output" ]] && echo "$filtered_output"
                 return 1
             fi
             stowed_pkgs+=("$pkg")
-            # Show non-LINK output if any
-            local filtered_output
-            filtered_output=$(echo "$stow_output" | grep -v "^LINK:")
+            filtered_output=$(echo "$stow_output" | filter_stow_output)
             [[ -n "$filtered_output" ]] && echo "$filtered_output"
         else
             missing_pkgs+=("$pkg")

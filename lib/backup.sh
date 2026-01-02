@@ -38,7 +38,7 @@ create_backup() {
 
     mkdir -p "$backup_dir"
 
-    local backed_up=()
+    local backed_up=0
     for file in "${files[@]}"; do
         if file_or_link_exists "$file" && ! is_dotfiles_managed "$file"; then
             local backup_path
@@ -48,12 +48,12 @@ create_backup() {
             else
                 cp -r "$file" "$backup_path"
             fi
-            backed_up+=("$(basename "$file")")
+            ((backed_up++))
         fi
     done
 
-    if [[ ${#backed_up[@]} -gt 0 ]]; then
-        echo "✓ Backed up ${#backed_up[@]} files to $backup_dir"
+    if [[ $backed_up -gt 0 ]]; then
+        echo "✓ Backed up $backed_up files to $backup_dir"
     fi
 }
 

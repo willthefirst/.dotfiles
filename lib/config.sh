@@ -33,28 +33,17 @@ VERIFY_SYMLINKS=()
 # Initialize derived arrays from PACKAGE_CONFIG
 # Call this after sourcing config.sh
 init_config() {
-    local seen_packages=()
-
     for entry in "${PACKAGE_CONFIG[@]}"; do
         local pkg="${entry%%:*}"
         local rest="${entry#*:}"
         local backup="${rest%%:*}"
         local verify="${rest#*:}"
 
-        # Add package if not seen
-        local found=false
-        for seen in "${seen_packages[@]}"; do
-            if [[ "$seen" == "$pkg" ]]; then
-                found=true
-                break
-            fi
-        done
-        if ! $found; then
+        # Add package if not already in PACKAGES array
+        if [[ " ${PACKAGES[*]} " != *" $pkg "* ]]; then
             PACKAGES+=("$pkg")
-            seen_packages+=("$pkg")
         fi
 
-        # Add backup and verify paths
         BACKUP_FILES+=("$backup")
         VERIFY_SYMLINKS+=("$verify")
     done
