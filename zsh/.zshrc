@@ -30,7 +30,7 @@ fi
 
 # Pure theme (if installed via Homebrew)
 if command -v brew &> /dev/null; then
-    local brew_prefix="$(brew --prefix)"
+    brew_prefix="$(brew --prefix)"
     if [[ -d "$brew_prefix/share/zsh/site-functions" ]]; then
         fpath+=("$brew_prefix/share/zsh/site-functions")
         autoload -U promptinit; promptinit
