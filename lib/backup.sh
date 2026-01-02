@@ -43,9 +43,9 @@ create_backup() {
         return 0
     fi
 
-    log_warn "Existing config files found. Creating backup at $backup_dir"
     mkdir -p "$backup_dir"
 
+    local backed_up=()
     for file in "${files[@]}"; do
         if [[ -e "$file" || -L "$file" ]]; then
             local should_backup=false
@@ -64,20 +64,18 @@ create_backup() {
                 local backup_path
                 backup_path="$backup_dir/$(basename "$file")"
                 if [[ -L "$file" ]]; then
-                    log_info "  Backing up symlink: $file -> $backup_path"
-                    # For symlinks, copy the target content
                     cp -rL "$file" "$backup_path" 2>/dev/null || cp -r "$file" "$backup_path"
                 else
-                    log_info "  Backing up: $file -> $backup_path"
                     cp -r "$file" "$backup_path"
                 fi
+                backed_up+=("$(basename "$file")")
             fi
         fi
     done
 
-    echo ""
-    log_info "Backup complete. Restore with: cp -r \"$backup_dir\"/* ~/"
-    echo ""
+    if [[ ${#backed_up[@]} -gt 0 ]]; then
+        echo "✓ Backed up ${#backed_up[@]} files to $backup_dir"
+    fi
 }
 
 # Restore from a backup directory
@@ -90,8 +88,7 @@ restore_backup() {
         return 1
     fi
 
-    log_info "Restoring from $backup_dir..."
-
+    local restored=0
     for file in "$backup_dir"/*; do
         if [[ -e "$file" ]]; then
             local filename
@@ -99,17 +96,13 @@ restore_backup() {
             local target="$HOME/$filename"
 
             # Remove existing file/symlink first
-            if [[ -e "$target" || -L "$target" ]]; then
-                log_info "  Removing: $target"
-                rm -rf "$target"
-            fi
-
-            log_info "  Restoring: $filename"
+            [[ -e "$target" || -L "$target" ]] && rm -rf "$target"
             cp -r "$file" "$target"
+            ((restored++))
         fi
     done
 
-    log_info "Restore complete!"
+    echo "✓ Restored $restored files from $backup_dir"
 }
 
 # List available backups
@@ -118,11 +111,11 @@ list_backups() {
     backups=$(find "$HOME" -maxdepth 1 -type d -name ".dotfiles-backup-*" 2>/dev/null | sort -r)
 
     if [[ -z "$backups" ]]; then
-        log_info "No backups found"
+        echo "No backups found"
         return
     fi
 
-    log_info "Available backups:"
+    echo "Available backups:"
     echo "$backups" | while read -r backup; do
         echo "  $backup"
     done
