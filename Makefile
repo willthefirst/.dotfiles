@@ -46,5 +46,5 @@ clean:
 	find ~ -maxdepth 1 -name ".dotfiles-backup-*" -mtime +7 -exec rm -rf {} \;
 
 uninstall:
-	cd $(HOME)/.dotfiles && stow -D -t ~ zsh git nvim ssh ghostty
+	cd $(HOME)/.dotfiles && stow -D -t ~ zsh git nvim ssh ghostty 2>&1 | grep -v "BUG in find_stowed_path" || true
 	@echo "Symlinks removed"
