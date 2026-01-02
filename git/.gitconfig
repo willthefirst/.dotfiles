@@ -1,9 +1,6 @@
 # =============================================================================
 # .gitconfig - Base Git Configuration
 # =============================================================================
-# This is a portable base config. Work-specific settings are loaded from
-# ~/.gitconfig.work if present (managed by dotfiles-stripe overlay).
-# =============================================================================
 
 [user]
     name = Will Moritz
@@ -47,9 +44,7 @@
     last = log -1 HEAD
 
 # =============================================================================
-# Work Overlay - Include work-specific config if present
+# Extensions
 # =============================================================================
-# This allows work dotfiles to extend/override settings (e.g., work email,
-# different signing key). Git handles missing includes gracefully.
 [include]
     path = ~/.gitconfig.work

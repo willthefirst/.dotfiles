@@ -4,7 +4,7 @@ Personal dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
 ## Overview
 
-This repository contains portable, base configuration files. Configs include hooks for optional overlays (`.zshrc.work`, `.gitconfig.work`, etc.) that can be managed by separate repositories.
+Portable configuration files for zsh, git, neovim, ssh, and ghostty.
 
 ## Structure
 
@@ -288,11 +288,10 @@ stow -D -t ~ zsh git nvim ssh ghostty
 
 ## Best Practices
 
-1. **Keep base portable** - No machine-specific or work-specific code
-2. **Conditional loading** - Always check if overlay files exist before sourcing
-3. **Don't store secrets** - Use environment variables or secure vaults
-4. **Test changes** - Run `make test` and `make validate` before committing
-5. **Run linting** - Use `make lint` to catch shell script issues
+1. **Keep configs portable** - No machine-specific code
+2. **Don't store secrets** - Use environment variables or secure vaults
+3. **Test changes** - Run `make test` and `make validate` before committing
+4. **Run linting** - Use `make lint` to catch shell script issues
 
 ## Git Commit Signing
 

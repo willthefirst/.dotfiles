@@ -1,9 +1,6 @@
 # =============================================================================
 # .zshrc - Base Shell Configuration
 # =============================================================================
-# This is a portable base config. Work-specific settings are loaded from
-# ~/.zshrc.work if present (managed by dotfiles-stripe overlay).
-# =============================================================================
 
 # -----------------------------------------------------------------------------
 # Oh My Zsh Setup
@@ -73,10 +70,6 @@ alias vim='nvim'
 # Add custom functions here
 
 # =============================================================================
-# Work Overlay - Load work-specific config if present
+# Extensions
 # =============================================================================
-# This allows work dotfiles to extend/override settings without modifying
-# this file. The work overlay is optional - config works without it.
-if [[ -f ~/.zshrc.work ]]; then
-  source ~/.zshrc.work
-fi
+[[ -f ~/.zshrc.work ]] && source ~/.zshrc.work
