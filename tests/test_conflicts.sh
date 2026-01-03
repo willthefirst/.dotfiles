@@ -80,6 +80,70 @@ test_get_package_conflicts_with_nonexistent_dir() {
 }
 
 # =============================================================================
+# Conflict string helper tests (no setup/teardown needed)
+# =============================================================================
+
+test_make_file_conflict() {
+    local result
+    result=$(make_file_conflict "/path/to/file")
+    assert "Expected file:/path/to/file" test "$result" == "file:/path/to/file"
+}
+
+test_make_symlink_conflict() {
+    local result
+    result=$(make_symlink_conflict "/path/to/link" "/target")
+    assert "Expected symlink:/path/to/link:/target" test "$result" == "symlink:/path/to/link:/target"
+}
+
+test_parse_conflict_type_file() {
+    local result
+    result=$(parse_conflict_type "file:/path/to/file")
+    assert "Expected 'file'" test "$result" == "file"
+}
+
+test_parse_conflict_type_symlink() {
+    local result
+    result=$(parse_conflict_type "symlink:/path:/target")
+    assert "Expected 'symlink'" test "$result" == "symlink"
+}
+
+test_parse_conflict_type_with_pkg_prefix() {
+    local result
+    result=$(parse_conflict_type "zsh:file:/path/to/file")
+    assert "Expected 'file' with pkg prefix" test "$result" == "file"
+}
+
+test_parse_conflict_path_file() {
+    local result
+    result=$(parse_conflict_path "file:/path/to/file")
+    assert "Expected '/path/to/file'" test "$result" == "/path/to/file"
+}
+
+test_parse_conflict_path_symlink() {
+    local result
+    result=$(parse_conflict_path "symlink:/path/to/link:/target")
+    assert "Expected '/path/to/link'" test "$result" == "/path/to/link"
+}
+
+test_parse_conflict_path_with_pkg_prefix() {
+    local result
+    result=$(parse_conflict_path "zsh:file:/home/user/.zshrc")
+    assert "Expected '/home/user/.zshrc' with pkg prefix" test "$result" == "/home/user/.zshrc"
+}
+
+test_parse_conflict_target_symlink() {
+    local result
+    result=$(parse_conflict_target "symlink:/path:/target/path")
+    assert "Expected '/target/path'" test "$result" == "/target/path"
+}
+
+test_parse_conflict_target_file_returns_empty() {
+    local result
+    result=$(parse_conflict_target "file:/path/to/file")
+    assert "Expected empty for file conflict" test -z "$result"
+}
+
+# =============================================================================
 # Run all tests
 # =============================================================================
 run_all_tests

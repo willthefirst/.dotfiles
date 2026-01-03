@@ -17,31 +17,97 @@
 # With package prefix: "pkg:type:path[:target]"
 # =============================================================================
 
-# Parse conflict string and extract the path component
-# Usage: parse_conflict_path "type:path[:target]" or "pkg:type:path[:target]"
-# Outputs: the path component
-parse_conflict_path() {
+# Conflict type constants
+readonly CONFLICT_TYPE_FILE="file"
+readonly CONFLICT_TYPE_SYMLINK="symlink"
+
+# =============================================================================
+# Conflict string constructors (preferred over inline string building)
+# =============================================================================
+
+# Create a file conflict string
+# Usage: make_file_conflict "/path/to/file"
+# Output: "file:/path/to/file"
+make_file_conflict() {
+    echo "${CONFLICT_TYPE_FILE}:$1"
+}
+
+# Create a symlink conflict string
+# Usage: make_symlink_conflict "/path/to/link" "/actual/target"
+# Output: "symlink:/path/to/link:/actual/target"
+make_symlink_conflict() {
+    echo "${CONFLICT_TYPE_SYMLINK}:$1:$2"
+}
+
+# =============================================================================
+# Conflict string parsers
+# =============================================================================
+
+# Parse conflict type from string
+# Usage: parse_conflict_type "type:path[:target]" or "pkg:type:path[:target]"
+# Output: "file" or "symlink"
+parse_conflict_type() {
     local conflict="$1"
-    local rest="${conflict#*:}"  # Remove first field (type or pkg)
-    # If this was pkg:type:path, we need to skip type too
-    if [[ "$rest" == *:* ]]; then
-        local maybe_type="${rest%%:*}"
-        if [[ "$maybe_type" == "file" || "$maybe_type" == "symlink" ]]; then
-            rest="${rest#*:}"  # Skip the type field
-        fi
+    local first="${conflict%%:*}"
+
+    # If first field is a known type, return it
+    if [[ "$first" == "$CONFLICT_TYPE_FILE" || "$first" == "$CONFLICT_TYPE_SYMLINK" ]]; then
+        echo "$first"
+        return
     fi
-    # Now extract path (everything before optional :target)
+
+    # Otherwise first field is pkg, type is second field
+    local rest="${conflict#*:}"
     echo "${rest%%:*}"
 }
 
+# Parse conflict path from string
+# Usage: parse_conflict_path "type:path[:target]" or "pkg:type:path[:target]"
+# Output: the path component
+parse_conflict_path() {
+    local conflict="$1"
+    local first="${conflict%%:*}"
+    local rest="${conflict#*:}"
+
+    # If first field is a type, path is second field
+    if [[ "$first" == "$CONFLICT_TYPE_FILE" || "$first" == "$CONFLICT_TYPE_SYMLINK" ]]; then
+        echo "${rest%%:*}"
+        return
+    fi
+
+    # First field is pkg, skip it and the type
+    rest="${rest#*:}"  # Skip type field
+    echo "${rest%%:*}"
+}
+
+# Parse symlink target from conflict string (symlink conflicts only)
+# Usage: parse_conflict_target "symlink:path:target" or "pkg:symlink:path:target"
+# Output: the target, or empty string if not a symlink conflict
+parse_conflict_target() {
+    local conflict="$1"
+    local type
+    type=$(parse_conflict_type "$conflict")
+
+    if [[ "$type" != "$CONFLICT_TYPE_SYMLINK" ]]; then
+        return
+    fi
+
+    # Target is the last colon-separated field
+    echo "${conflict##*:}"
+}
+
+# =============================================================================
+# Conflict detection helpers
+# =============================================================================
+
 # Report symlink conflict if symlink doesn't match expected target
 # Usage: report_symlink_mismatch target_path expected_target
-# Outputs: "symlink:path:actual_target" if mismatch, nothing if matches
+# Outputs: conflict string if mismatch, nothing if matches
 report_symlink_mismatch() {
     local target_path="$1"
     local expected_target="$2"
     if ! symlink_matches "$target_path" "$expected_target"; then
-        echo "symlink:$target_path:$(readlink "$target_path")"
+        make_symlink_conflict "$target_path" "$(readlink "$target_path")"
     fi
 }
 
@@ -70,13 +136,17 @@ check_directory_conflict() {
     if [[ -L "$target_path" ]]; then
         report_symlink_mismatch "$target_path" "$pkg_dir/$rel_path"
     elif [[ -e "$target_path" && ! -d "$target_path" ]]; then
-        echo "file:$target_path"
+        make_file_conflict "$target_path"
     fi
 }
 
+# Status constants for check_parent_symlink
+readonly PARENT_STATUS_MANAGED="managed"
+readonly PARENT_STATUS_ALREADY_REPORTED="already_reported"
+
 # Check file for parent symlink conflicts
 # Usage: check_parent_symlink pkg_dir target_dir target_path checked_dirs_ref
-# Returns: "managed" if managed by parent, "conflict:path:target" if conflict, "" if none
+# Returns: "managed", "already_reported", or symlink conflict string
 check_parent_symlink() {
     local pkg_dir="$1"
     local target_dir="$2"
@@ -92,11 +162,11 @@ check_parent_symlink() {
             local expected_parent="$pkg_dir/$parent_rel"
 
             if symlink_matches "$parent_path" "$expected_parent"; then
-                echo "managed"
+                echo "$PARENT_STATUS_MANAGED"
             elif ! is_already_checked "$parent_path" "${checked_dirs[@]}"; then
-                echo "conflict:$parent_path:$(readlink "$parent_path")"
+                make_symlink_conflict "$parent_path" "$(readlink "$parent_path")"
             else
-                echo "already_reported"
+                echo "$PARENT_STATUS_ALREADY_REPORTED"
             fi
             return
         fi
@@ -114,7 +184,7 @@ check_file_conflict() {
     if [[ -L "$target_path" ]]; then
         report_symlink_mismatch "$target_path" "$pkg_dir/$rel_path"
     elif [[ -e "$target_path" ]]; then
-        echo "file:$target_path"
+        make_file_conflict "$target_path"
     fi
 }
 
@@ -148,14 +218,14 @@ get_package_conflicts() {
             parent_result=$(check_parent_symlink "$pkg_dir" "$target_dir" "$target_path" "${checked_dirs[@]}")
 
             case "$parent_result" in
-                managed|already_reported)
+                "$PARENT_STATUS_MANAGED"|"$PARENT_STATUS_ALREADY_REPORTED")
                     # Skip - already handled
                     ;;
-                conflict:*)
-                    # Parent symlink is a conflict
-                    local parent_path="${parent_result#conflict:}"
-                    parent_path="${parent_path%%:*}"
-                    conflicts+=("symlink:${parent_result#conflict:}")
+                "$CONFLICT_TYPE_SYMLINK":*)
+                    # Parent symlink is a conflict - result is already formatted
+                    local parent_path
+                    parent_path=$(parse_conflict_path "$parent_result")
+                    conflicts+=("$parent_result")
                     checked_dirs+=("$parent_path")
                     ;;
                 *)
@@ -199,8 +269,10 @@ check_all_conflicts() {
         for conflict in "${all_conflicts[@]}"; do
             local pkg="${conflict%%:*}"
             local rest="${conflict#*:}"
-            local type="${rest%%:*}"
-            local path="${rest#*:}"
+            local type path target
+
+            type=$(parse_conflict_type "$rest")
+            path=$(parse_conflict_path "$rest")
 
             if [[ "$pkg" != "$current_pkg" ]]; then
                 [[ -n "$current_pkg" ]] && echo ""
@@ -208,9 +280,8 @@ check_all_conflicts() {
                 current_pkg="$pkg"
             fi
 
-            if [[ "$type" == "symlink" ]]; then
-                local target="${path#*:}"
-                path="${path%%:*}"
+            if [[ "$type" == "$CONFLICT_TYPE_SYMLINK" ]]; then
+                target=$(parse_conflict_target "$rest")
                 log_error "  $path"
                 log_info "    -> symlink to $target (not managed by stow)"
             else
