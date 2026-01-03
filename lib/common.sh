@@ -32,21 +32,6 @@ source "$SCRIPT_DIR_COMMON/fs.sh"
 # Additional utilities
 # =============================================================================
 
-# Check if a command exists
-require_command() {
-    local cmd="$1"
-    local install_hint="${2:-}"
-
-    if ! command -v "$cmd" &> /dev/null; then
-        log_error "$cmd is not installed."
-        if [[ -n "$install_hint" ]]; then
-            log_info "$install_hint"
-        fi
-        return 1
-    fi
-    return 0
-}
-
 # Print next steps after installation
 print_next_steps() {
     echo ""
