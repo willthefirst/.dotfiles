@@ -7,18 +7,14 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=tests/helpers.sh
 source "$SCRIPT_DIR/helpers.sh"
-init_test_env deps
 
-# Custom setup/teardown for dry run mode
-setup() {
-    setup_test_env true
-    deps_dry_run_enable
-}
-
-teardown() {
-    deps_dry_run_disable
-    teardown_test_env
-}
+# Initialize test environment with required modules
+# deps module requires: common (log, platform, fs), validate, pkg-manager
+init_test_env validate
+# shellcheck source=lib/pkg-manager.sh
+source "$ROOT_DIR/lib/pkg-manager.sh"
+# shellcheck source=lib/deps.sh
+source "$ROOT_DIR/lib/deps.sh"
 
 # =============================================================================
 # Deps file parsing tests
@@ -114,12 +110,12 @@ test_read_deps_file_handles_mixed_whitespace() {
 }
 
 # =============================================================================
-# Package installation tests
+# Package installation tests (using --dry-run parameter)
 # =============================================================================
 
 test_install_package_deps_skips_missing_package() {
     local output
-    output=$(install_package_deps "nonexistent" 2>&1)
+    output=$(install_package_deps "nonexistent" --dry-run 2>&1)
     assert_contains "$output" "not found"
 }
 
@@ -127,7 +123,7 @@ test_install_package_deps_skips_package_without_deps() {
     mkdir -p "$TEST_DOTFILES/empty_pkg/.config/test"
     touch "$TEST_DOTFILES/empty_pkg/.config/test/config"
 
-    install_package_deps "empty_pkg"
+    install_package_deps "empty_pkg" --dry-run
 }
 
 test_install_package_deps_reads_common_deps() {
@@ -135,7 +131,7 @@ test_install_package_deps_reads_common_deps() {
     echo "testdep" > "$TEST_DOTFILES/testpkg/deps"
 
     local output
-    output=$(install_package_deps "testpkg" 2>&1)
+    output=$(install_package_deps "testpkg" --dry-run 2>&1)
     assert_contains "$output" "testdep"
 }
 
@@ -146,7 +142,7 @@ test_install_package_deps_reads_platform_deps() {
     echo "platform-dep" > "$TEST_DOTFILES/testpkg/deps.$platform"
 
     local output
-    output=$(install_package_deps "testpkg" 2>&1)
+    output=$(install_package_deps "testpkg" --dry-run 2>&1)
     assert_contains "$output" "platform-dep"
 }
 
@@ -159,7 +155,7 @@ install_testpkg() {
 EOF
 
     local output
-    output=$(install_package_deps "testpkg" 2>&1)
+    output=$(install_package_deps "testpkg" --dry-run 2>&1)
     assert_contains "$output" "testpkg"
     assert_contains "$output" "custom"
 }
@@ -174,7 +170,7 @@ install_orderpkg() {
 EOF
 
     local output
-    output=$(install_package_deps "orderpkg" 2>&1)
+    output=$(install_package_deps "orderpkg" --dry-run 2>&1)
 
     local install_line dep_line
     install_line=$(echo "$output" | grep -n "custom" | head -1 | cut -d: -f1)
@@ -189,7 +185,7 @@ EOF
 }
 
 # =============================================================================
-# Utility function tests
+# Utility function tests (now in validate.sh and fs.sh)
 # =============================================================================
 
 test_has_command_finds_existing() {
@@ -214,21 +210,20 @@ test_ensure_dir_handles_existing() {
 }
 
 # =============================================================================
-# Dry run tests
+# Dry run tests (using --dry-run parameter)
 # =============================================================================
 
 test_dry_run_mode_prevents_install() {
     mkdir -p "$TEST_DOTFILES/drypkg"
     echo "somepackage" > "$TEST_DOTFILES/drypkg/deps"
 
-    deps_dry_run_enable
     local output
-    output=$(install_package_deps "drypkg" 2>&1)
+    output=$(install_package_deps "drypkg" --dry-run 2>&1)
     assert_contains "$output" "dry-run"
 }
 
 # =============================================================================
-# Mock infrastructure tests (demonstrates new mock capabilities)
+# Mock infrastructure tests (demonstrates mock capabilities)
 # =============================================================================
 
 test_mock_pkg_install_records_calls() {
@@ -239,13 +234,12 @@ test_mock_pkg_install_records_calls() {
     mkdir -p "$TEST_DOTFILES/mockpkg"
     echo "test-dependency" > "$TEST_DOTFILES/mockpkg/deps"
 
-    # Disable dry-run and mock the functions that would hit system
-    deps_dry_run_disable
+    # Mock the functions that would hit system (no --dry-run, use mocks)
     mock_function "pkg_install"
     mock_function "pkg_installed" 1  # Return 1 (not installed)
     mock_function "has_command" 1    # Return 1 (command not found)
 
-    # Call the function under test
+    # Call the function under test (without --dry-run)
     install_package_deps "mockpkg" >/dev/null 2>&1
 
     # Verify pkg_install was called
@@ -257,7 +251,6 @@ test_mock_verifies_call_arguments() {
     mkdir -p "$TEST_DOTFILES/argpkg"
     echo "specific-package" > "$TEST_DOTFILES/argpkg/deps"
 
-    deps_dry_run_disable
     mock_function "pkg_install"
     mock_function "pkg_installed" 1
     mock_function "has_command" 1
@@ -277,7 +270,6 @@ package2
 package3
 EOF
 
-    deps_dry_run_disable
     mock_function "pkg_install"
     mock_function "pkg_installed" 1
     mock_function "has_command" 1
@@ -304,7 +296,6 @@ test_mock_not_called_verification() {
     mkdir -p "$TEST_DOTFILES/nocallpkg"
     # No deps file - pkg_install should not be called
 
-    deps_dry_run_disable
     mock_function "pkg_install"
 
     install_package_deps "nocallpkg" >/dev/null 2>&1

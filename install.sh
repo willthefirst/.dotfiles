@@ -23,6 +23,10 @@ source "$SCRIPT_DIR/lib/backup.sh"
 source "$SCRIPT_DIR/lib/deploy.sh"
 # shellcheck source=lib/verify.sh
 source "$SCRIPT_DIR/lib/verify.sh"
+# shellcheck source=lib/validate.sh
+source "$SCRIPT_DIR/lib/validate.sh"
+# shellcheck source=lib/pkg-manager.sh
+source "$SCRIPT_DIR/lib/pkg-manager.sh"
 # shellcheck source=lib/deps.sh
 source "$SCRIPT_DIR/lib/deps.sh"
 

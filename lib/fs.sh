@@ -4,6 +4,13 @@
 # File system utilities
 # =============================================================================
 
+# Create directory if it doesn't exist
+# Usage: ensure_dir <path>
+ensure_dir() {
+    local path="$1"
+    [[ -d "$path" ]] || mkdir -p "$path"
+}
+
 # Resolve a path to its absolute target (follows symlinks)
 # Usage: resolve_link "/path/to/link"
 # Outputs: resolved path, or original path if resolution fails
