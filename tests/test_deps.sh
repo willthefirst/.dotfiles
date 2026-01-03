@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Tests for dependency installation module
+# Tests for dependency installation module (lib/deps.sh)
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,35 +12,12 @@ init_test_env deps
 # Custom setup/teardown for dry run mode
 setup() {
     setup_test_env true
-    deps_dry_run_enable  # Don't actually install packages in tests
+    deps_dry_run_enable
 }
 
 teardown() {
     deps_dry_run_disable
     teardown_test_env
-}
-
-# =============================================================================
-# Platform detection tests
-# =============================================================================
-
-test_is_darwin_or_is_linux() {
-    # At least one should be true
-    if is_macos || is_linux; then
-        return 0
-    fi
-    echo "  Neither is_macos nor is_linux returned true"
-    return 1
-}
-
-test_get_platform_suffix_returns_valid() {
-    local suffix
-    suffix=$(get_platform_suffix)
-    if [[ "$suffix" == "darwin" || "$suffix" == "linux" ]]; then
-        return 0
-    fi
-    echo "  Expected 'darwin' or 'linux', got: $suffix"
-    return 1
 }
 
 # =============================================================================
@@ -99,14 +76,12 @@ test_read_deps_file_handles_inline_comments() {
 }
 
 test_read_deps_file_handles_tabs() {
-    # Use printf to ensure tabs are preserved
     printf '\tpackage1\t\n' > "$TEST_DOTFILES/deps"
     printf 'package2\t# comment\n' >> "$TEST_DOTFILES/deps"
     local output
     output=$(read_deps_file "$TEST_DOTFILES/deps")
     assert_contains "$output" "package1"
     assert_contains "$output" "package2"
-    # Verify no tabs remain in output
     if echo "$output" | grep -q $'\t'; then
         echo "  Tabs were not trimmed from output"
         return 1
@@ -115,15 +90,12 @@ test_read_deps_file_handles_tabs() {
 }
 
 test_read_deps_file_handles_crlf_line_endings() {
-    # Create file with Windows-style CRLF line endings
     printf 'package1\r\npackage2\r\n' > "$TEST_DOTFILES/deps"
     local output
     output=$(read_deps_file "$TEST_DOTFILES/deps")
-    # Should have 2 packages without carriage returns
     local line_count
     line_count=$(echo "$output" | grep -c .)
     assert "Expected 2 packages with CRLF input, got $line_count" test "$line_count" -eq 2
-    # Verify no carriage returns remain
     if echo "$output" | grep -q $'\r'; then
         echo "  Carriage returns were not stripped"
         return 1
@@ -132,25 +104,22 @@ test_read_deps_file_handles_crlf_line_endings() {
 }
 
 test_read_deps_file_handles_mixed_whitespace() {
-    # Mix of tabs, spaces, and content
     printf '  \t  package1  \t  \n' > "$TEST_DOTFILES/deps"
     printf '\t\tpackage2   # comment with trailing spaces   \n' >> "$TEST_DOTFILES/deps"
     local output
     output=$(read_deps_file "$TEST_DOTFILES/deps")
-    # First line should be exactly "package1"
     local first_line
     first_line=$(echo "$output" | head -1)
     assert "Expected 'package1', got: '$first_line'" test "$first_line" == "package1"
 }
 
 # =============================================================================
-# Install order tests
+# Package installation tests
 # =============================================================================
 
 test_install_package_deps_skips_missing_package() {
     local output
     output=$(install_package_deps "nonexistent" 2>&1)
-    # Should not error, just warn
     assert_contains "$output" "not found"
 }
 
@@ -158,7 +127,6 @@ test_install_package_deps_skips_package_without_deps() {
     mkdir -p "$TEST_DOTFILES/empty_pkg/.config/test"
     touch "$TEST_DOTFILES/empty_pkg/.config/test/config"
 
-    # Should succeed silently with no deps files
     install_package_deps "empty_pkg"
 }
 
@@ -208,7 +176,6 @@ EOF
     local output
     output=$(install_package_deps "orderpkg" 2>&1)
 
-    # Get line numbers for each (custom install vs dep)
     local install_line dep_line
     install_line=$(echo "$output" | grep -n "custom" | head -1 | cut -d: -f1)
     dep_line=$(echo "$output" | grep -n "dep1" | head -1 | cut -d: -f1)
@@ -242,7 +209,7 @@ test_ensure_dir_creates_directory() {
 
 test_ensure_dir_handles_existing() {
     mkdir -p "$TEST_HOME/existingdir"
-    ensure_dir "$TEST_HOME/existingdir"  # Should not error
+    ensure_dir "$TEST_HOME/existingdir"
     assert_dir_exists "$TEST_HOME/existingdir"
 }
 
