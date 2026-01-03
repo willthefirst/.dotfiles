@@ -228,6 +228,92 @@ test_dry_run_mode_prevents_install() {
 }
 
 # =============================================================================
+# Mock infrastructure tests (demonstrates new mock capabilities)
+# =============================================================================
+
+test_mock_pkg_install_records_calls() {
+    # This test demonstrates the mock infrastructure
+    # We mock pkg_install and verify it records calls correctly
+
+    # Create a package with deps
+    mkdir -p "$TEST_DOTFILES/mockpkg"
+    echo "test-dependency" > "$TEST_DOTFILES/mockpkg/deps"
+
+    # Disable dry-run and mock the functions that would hit system
+    deps_dry_run_disable
+    mock_function "pkg_install"
+    mock_function "pkg_installed" 1  # Return 1 (not installed)
+    mock_function "has_command" 1    # Return 1 (command not found)
+
+    # Call the function under test
+    install_package_deps "mockpkg" >/dev/null 2>&1
+
+    # Verify pkg_install was called
+    assert_called "pkg_install"
+}
+
+test_mock_verifies_call_arguments() {
+    # Demonstrates verifying function was called with specific arguments
+    mkdir -p "$TEST_DOTFILES/argpkg"
+    echo "specific-package" > "$TEST_DOTFILES/argpkg/deps"
+
+    deps_dry_run_disable
+    mock_function "pkg_install"
+    mock_function "pkg_installed" 1
+    mock_function "has_command" 1
+
+    install_package_deps "argpkg" >/dev/null 2>&1
+
+    # Verify the exact argument passed to pkg_install
+    assert_called_with "pkg_install" "specific-package"
+}
+
+test_mock_counts_invocations() {
+    # Demonstrates counting function invocations
+    mkdir -p "$TEST_DOTFILES/countpkg"
+    cat > "$TEST_DOTFILES/countpkg/deps" <<EOF
+package1
+package2
+package3
+EOF
+
+    deps_dry_run_disable
+    mock_function "pkg_install"
+    mock_function "pkg_installed" 1
+    mock_function "has_command" 1
+
+    install_package_deps "countpkg" >/dev/null 2>&1
+
+    # Verify pkg_install was called 3 times (once per package)
+    assert_call_count "pkg_install" 3
+}
+
+test_mock_function_output() {
+    # Demonstrates mocking a function with specific output
+    mock_function_output "get_test_value" "mocked-value"
+
+    local result
+    result=$(get_test_value)
+
+    assert "Expected mocked output" test "$result" == "mocked-value"
+    assert_called "get_test_value"
+}
+
+test_mock_not_called_verification() {
+    # Demonstrates verifying a function was NOT called
+    mkdir -p "$TEST_DOTFILES/nocallpkg"
+    # No deps file - pkg_install should not be called
+
+    deps_dry_run_disable
+    mock_function "pkg_install"
+
+    install_package_deps "nocallpkg" >/dev/null 2>&1
+
+    # Verify pkg_install was NOT called (no deps to install)
+    assert_not_called "pkg_install"
+}
+
+# =============================================================================
 # Run all tests
 # =============================================================================
 run_all_tests

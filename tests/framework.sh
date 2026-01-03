@@ -53,6 +53,9 @@ init_test_env() {
 setup_test_env() {
     local create_structure="${1:-false}"
 
+    # Initialize mock system
+    mock_init
+
     TEST_HOME=$(mktemp -d)
     TEST_DOTFILES=$(mktemp -d)
     ORIGINAL_HOME="$HOME"
@@ -73,6 +76,9 @@ setup_test_env() {
 
 # Teardown test environment and restore original values
 teardown_test_env() {
+    # Cleanup mock system
+    mock_cleanup
+
     HOME="$ORIGINAL_HOME"
     DOTFILES_DIR="$ORIGINAL_DOTFILES_DIR"
     rm -rf "$TEST_HOME" "$TEST_DOTFILES"
