@@ -1,7 +1,7 @@
 # Tool versions - CI reads these to stay in sync with local
 SHELLCHECK_VERSION := 0.11.0
 
-.PHONY: setup configure configure-force configure-adopt install test lint check-shellcheck-version validate clean uninstall help
+.PHONY: setup configure configure-force configure-adopt install test lint lint-conventions check-shellcheck-version validate clean uninstall help
 
 # Default packages (all available)
 PACKAGES ?= nvim git zsh ssh ghostty
@@ -15,7 +15,8 @@ help:
 	@echo "  make configure-force  - Configure, removing conflicts"
 	@echo "  make configure-adopt  - Configure, adopting existing files"
 	@echo "  make test             - Run test suite"
-	@echo "  make lint             - Run ShellCheck"
+	@echo "  make lint             - Run ShellCheck + conventions"
+	@echo "  make lint-conventions - Check coding conventions only"
 	@echo "  make validate         - Validate configs"
 	@echo "  make clean            - Remove backups older than 7 days"
 	@echo "  make uninstall        - Remove all symlinks"
@@ -48,10 +49,13 @@ check-shellcheck-version:
 	@shellcheck --version | grep -q 'version: $(SHELLCHECK_VERSION)' \
 		|| { $(LOG) error "Expected shellcheck $(SHELLCHECK_VERSION), run: brew upgrade shellcheck"; exit 1; }
 
-lint: check-shellcheck-version
+lint: check-shellcheck-version lint-conventions
 	shellcheck $(SHELL_FILES)
 	@for f in $(SHELL_FILES); do bash -n "$$f" || exit 1; done
 	@$(LOG) ok "All files pass ShellCheck and syntax check"
+
+lint-conventions:
+	@./scripts/lint-conventions.sh
 
 validate:
 	./validate.sh
