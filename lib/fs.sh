@@ -6,9 +6,16 @@
 
 # Create directory if it doesn't exist
 # Usage: ensure_dir <path>
+# Returns: 0 on success, 1 on failure
 ensure_dir() {
     local path="$1"
-    [[ -d "$path" ]] || mkdir -p "$path"
+    if [[ -d "$path" ]]; then
+        return 0
+    fi
+    if ! mkdir -p "$path"; then
+        log_error "Failed to create directory: $path"
+        return 1
+    fi
 }
 
 # Resolve a path to its absolute target (follows symlinks)
@@ -51,6 +58,7 @@ is_dotfiles_managed() {
 
 # Install file to bin directory, using sudo only if needed
 # Usage: install_to_bin "/path/to/source" "name"
+# Returns: 0 on success, 1 on failure
 # Automatically skips sudo when DOTFILES_BIN_DIR is writable (e.g., in tests)
 install_to_bin() {
     local source="$1"
@@ -58,9 +66,15 @@ install_to_bin() {
     local dest="$DOTFILES_BIN_DIR/$name"
 
     if [[ -w "$DOTFILES_BIN_DIR" ]]; then
-        mv "$source" "$dest"
+        if ! mv "$source" "$dest"; then
+            log_error "Failed to install $name to $DOTFILES_BIN_DIR"
+            return 1
+        fi
     else
-        sudo mv "$source" "$dest"
+        if ! sudo mv "$source" "$dest"; then
+            log_error "Failed to install $name to $DOTFILES_BIN_DIR (sudo)"
+            return 1
+        fi
     fi
 }
 

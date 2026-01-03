@@ -90,6 +90,12 @@ main() {
         fi
     done
 
+    # Run convention linting
+    log_section "Running convention lints..."
+    if ! "$SCRIPT_DIR/scripts/lint-conventions.sh"; then
+        ((errors++)) || true
+    fi
+
     echo ""
     if [[ $errors -eq 0 ]]; then
         log_ok "All validations passed!"
