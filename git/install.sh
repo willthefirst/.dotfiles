@@ -6,40 +6,41 @@
 # macOS uses deps.darwin (brew), Linux uses GitHub releases
 # =============================================================================
 
+# shellcheck source=lib/install-helpers.sh
+source "${BASH_SOURCE%/*}/../lib/install-helpers.sh"
+
 install_git() {
     if is_linux; then
-        # Install latest lazygit from GitHub releases
-        local arch
-        arch=$(uname -m)
-        local lazygit_arch="x86_64"
-        if [[ "$arch" == "aarch64" || "$arch" == "arm64" ]]; then
-            lazygit_arch="arm64"
-        fi
+        local arch os tmp_archive tmp_dir version asset_name
+        arch=$(get_arch_string)
+        os=$(get_os_string)
+        tmp_dir="${DOTFILES_TEMP_DIR:-/tmp}"
+        tmp_archive="$tmp_dir/lazygit.tar.gz"
 
-        # Fetch latest version from GitHub API
         log_step "Fetching latest lazygit version..."
-        local version
-        version=$(curl -fsSL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
+        version=$(get_github_latest_version "jesseduffield/lazygit")
         if [[ -z "$version" ]]; then
-            log_error "  Failed to fetch latest version"
+            log_error "Failed to fetch latest version"
             return 1
         fi
+        # Strip 'v' prefix for asset name
+        version="${version#v}"
 
-        local lazygit_url="https://github.com/jesseduffield/lazygit/releases/download/v${version}/lazygit_${version}_Linux_${lazygit_arch}.tar.gz"
+        asset_name="lazygit_${version}_${os}_${arch}.tar.gz"
 
         log_step "Downloading lazygit ${version}..."
-        if ! curl -fsSL "$lazygit_url" -o "$DOTFILES_TEMP_DIR/lazygit.tar.gz"; then
-            log_error "  Failed to download lazygit"
+        if ! download_github_release "jesseduffield/lazygit" "$asset_name" "$tmp_archive"; then
             return 1
         fi
+
         log_step "Extracting lazygit..."
-        if ! tar -xzf "$DOTFILES_TEMP_DIR/lazygit.tar.gz" -C "$DOTFILES_TEMP_DIR" lazygit 2>/dev/null; then
-            log_error "  Failed to extract lazygit"
+        if ! extract_archive "$tmp_archive" "$tmp_dir" "lazygit"; then
+            cleanup_temp "$tmp_archive"
             return 1
         fi
-        chmod +x "$DOTFILES_TEMP_DIR/lazygit"
-        log_step "Installing to $DOTFILES_BIN_DIR/lazygit..."
-        install_to_bin "$DOTFILES_TEMP_DIR/lazygit" lazygit
-        rm -f "$DOTFILES_TEMP_DIR/lazygit.tar.gz"
+
+        log_step "Installing to ${DOTFILES_BIN_DIR:-/usr/local/bin}/lazygit..."
+        install_binary "$tmp_dir/lazygit" "lazygit"
+        cleanup_temp "$tmp_archive"
     fi
 }
