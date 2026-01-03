@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Configuration variables for dotfiles
+# lib/config.sh - Configuration variables for dotfiles
+# =============================================================================
+# Dependencies: log.sh
+# Provides: DOTFILES_*, PACKAGE_CONFIG, PACKAGES, BACKUP_FILES, VERIFY_SYMLINKS,
+#           init_config, is_valid_package, resolve_packages
 # =============================================================================
 
-SCRIPT_DIR_CONFIG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_CONFIG_LOADED:-}" ]] && return 0
+_DOTFILES_CONFIG_LOADED=1
 
-# Source logging for validation errors
+# Source dependencies
 # shellcheck source=lib/log.sh
-source "$SCRIPT_DIR_CONFIG/log.sh"
+source "${BASH_SOURCE%/*}/log.sh"
 
 # =============================================================================
 # Configurable Paths
@@ -23,6 +29,9 @@ source "$SCRIPT_DIR_CONFIG/log.sh"
 #   export DOTFILES_HOME=/tmp/test-home
 #   source lib/config.sh
 # =============================================================================
+
+# Directory paths (must be set before other paths that depend on it)
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 
 # Base directories
 : "${DOTFILES_HOME:=$HOME}"
@@ -39,9 +48,6 @@ source "$SCRIPT_DIR_CONFIG/log.sh"
 # Export for subshells
 export DOTFILES_HOME DOTFILES_CONFIG_DIR DOTFILES_SSH_DIR
 export DOTFILES_BIN_DIR DOTFILES_TEMP_DIR DOTFILES_BACKUP_DIR
-
-# Directory paths
-DOTFILES_DIR="${DOTFILES_DIR:-$DOTFILES_HOME/.dotfiles}"
 
 # Backup configuration
 # shellcheck disable=SC2034

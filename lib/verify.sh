@@ -1,8 +1,23 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Installation verification
+# lib/verify.sh - Installation verification
 # =============================================================================
+# Dependencies: log.sh, fs.sh, config.sh
+# Provides: verify_installation
+# =============================================================================
+
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_VERIFY_LOADED:-}" ]] && return 0
+_DOTFILES_VERIFY_LOADED=1
+
+# Source dependencies
+# shellcheck source=lib/log.sh
+source "${BASH_SOURCE%/*}/log.sh"
+# shellcheck source=lib/fs.sh
+source "${BASH_SOURCE%/*}/fs.sh"
+# shellcheck source=lib/config.sh
+source "${BASH_SOURCE%/*}/config.sh"
 
 # Verify all symlinks are properly installed
 verify_installation() {

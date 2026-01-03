@@ -1,8 +1,23 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Backup logic for dotfiles
+# lib/backup.sh - Backup logic for dotfiles
 # =============================================================================
+# Dependencies: log.sh, fs.sh, config.sh
+# Provides: needs_backup, create_backup
+# =============================================================================
+
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_BACKUP_LOADED:-}" ]] && return 0
+_DOTFILES_BACKUP_LOADED=1
+
+# Source dependencies
+# shellcheck source=lib/log.sh
+source "${BASH_SOURCE%/*}/log.sh"
+# shellcheck source=lib/fs.sh
+source "${BASH_SOURCE%/*}/fs.sh"
+# shellcheck source=lib/config.sh
+source "${BASH_SOURCE%/*}/config.sh"
 
 # Check if any files need backup
 # Returns 0 if backup needed, 1 if not

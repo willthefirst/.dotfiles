@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Conflict resolution and user-facing reporting
+# lib/conflict-resolve.sh - Conflict resolution and user-facing reporting
 # =============================================================================
-# Error handling conventions:
-#   - User-facing functions log errors before returning non-zero
+# Dependencies: conflict-data.sh, conflict-detect.sh, log.sh, config.sh
+# Provides: check_all_conflicts, remove_conflict, is_under_removed_path,
+#           handle_conflicts
 # =============================================================================
 
-# Guard against re-sourcing
-[[ -n "${_CONFLICT_RESOLVE_SH_LOADED:-}" ]] && return 0
-_CONFLICT_RESOLVE_SH_LOADED=true
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_CONFLICT_RESOLVE_LOADED:-}" ]] && return 0
+_DOTFILES_CONFLICT_RESOLVE_LOADED=1
 
 # Source dependencies
 # shellcheck source=lib/conflict-data.sh
@@ -18,6 +19,8 @@ source "${BASH_SOURCE%/*}/conflict-data.sh"
 source "${BASH_SOURCE%/*}/conflict-detect.sh"
 # shellcheck source=lib/log.sh
 source "${BASH_SOURCE%/*}/log.sh"
+# shellcheck source=lib/config.sh
+source "${BASH_SOURCE%/*}/config.sh"
 
 # =============================================================================
 # Conflict reporting

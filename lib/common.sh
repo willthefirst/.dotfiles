@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Common utilities for dotfiles scripts
+# lib/common.sh - Common utilities facade for dotfiles scripts
 # =============================================================================
-# This module sources focused utility modules and provides additional helpers.
-# Source this file to get all common utilities.
+# Dependencies: log.sh, platform.sh, fs.sh
+# Provides: All exports from log.sh, platform.sh, fs.sh, plus print_next_steps
 #
 # CODING CONVENTIONS
 # ==================
@@ -54,15 +54,17 @@
 #
 # =============================================================================
 
-SCRIPT_DIR_COMMON="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_COMMON_LOADED:-}" ]] && return 0
+_DOTFILES_COMMON_LOADED=1
 
-# Source focused modules
+# Source dependencies (guards prevent double-loading)
 # shellcheck source=lib/log.sh
-source "$SCRIPT_DIR_COMMON/log.sh"
+source "${BASH_SOURCE%/*}/log.sh"
 # shellcheck source=lib/platform.sh
-source "$SCRIPT_DIR_COMMON/platform.sh"
+source "${BASH_SOURCE%/*}/platform.sh"
 # shellcheck source=lib/fs.sh
-source "$SCRIPT_DIR_COMMON/fs.sh"
+source "${BASH_SOURCE%/*}/fs.sh"
 
 # =============================================================================
 # Additional utilities

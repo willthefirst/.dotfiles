@@ -1,17 +1,27 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Stow deployment logic
+# lib/deploy.sh - Stow deployment logic
 # =============================================================================
-# Error handling conventions:
-#   - Check functions (is_*, has_*) return 0/1, no logging
-#   - User-facing functions log errors before returning non-zero
-#   - Data-returning functions output to stdout, errors to stderr
+# Dependencies: log.sh, fs.sh, config.sh, conflicts.sh, pkg-manager.sh
+# Provides: create_directories, check_prerequisites, deploy_packages, deploy_base
 # =============================================================================
 
-# Guard against re-sourcing (readonly variables can't be redeclared)
-[[ -n "${_DEPLOY_SH_LOADED:-}" ]] && return 0
-_DEPLOY_SH_LOADED=true
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_DEPLOY_LOADED:-}" ]] && return 0
+_DOTFILES_DEPLOY_LOADED=1
+
+# Source dependencies
+# shellcheck source=lib/log.sh
+source "${BASH_SOURCE%/*}/log.sh"
+# shellcheck source=lib/fs.sh
+source "${BASH_SOURCE%/*}/fs.sh"
+# shellcheck source=lib/config.sh
+source "${BASH_SOURCE%/*}/config.sh"
+# shellcheck source=lib/conflicts.sh
+source "${BASH_SOURCE%/*}/conflicts.sh"
+# shellcheck source=lib/pkg-manager.sh
+source "${BASH_SOURCE%/*}/pkg-manager.sh"
 
 # SSH directory permissions (owner read/write/execute only)
 readonly SSH_DIR_PERMISSIONS=700

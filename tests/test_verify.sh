@@ -59,6 +59,7 @@ test_verify_installation_counts_multiple_configs() {
 }
 
 test_verify_installation_handles_empty_list() {
+    # shellcheck disable=SC2034  # VERIFY_SYMLINKS is used by verify_installation
     VERIFY_SYMLINKS=()
 
     local output

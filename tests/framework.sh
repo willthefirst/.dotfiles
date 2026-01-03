@@ -32,15 +32,14 @@ ORIGINAL_DOTFILES_BACKUP_DIR=""
 # Initialize test environment and source required modules
 # Usage: init_test_env [module1] [module2] ...
 # Example: init_test_env backup deploy
-# Always sources: common.sh, config.sh
+# Sources all modules via lib/init.sh (guards prevent double-loading)
 init_test_env() {
-    # Always source common and config
-    # shellcheck source=lib/common.sh
-    source "$ROOT_DIR/lib/common.sh"
-    # shellcheck source=lib/config.sh
-    source "$ROOT_DIR/lib/config.sh"
+    # Source all library modules via central initialization
+    # Guards prevent redundant sourcing when modules are explicitly requested
+    # shellcheck source=lib/init.sh
+    source "$ROOT_DIR/lib/init.sh"
 
-    # Source additional modules passed as arguments
+    # Source additional modules passed as arguments (no-op if already loaded via init.sh)
     for module in "$@"; do
         local module_path="$ROOT_DIR/lib/${module}.sh"
         if [[ -f "$module_path" ]]; then

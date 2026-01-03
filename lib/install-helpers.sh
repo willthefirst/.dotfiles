@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Helper functions for installing packages from external sources
+# lib/install-helpers.sh - Helper functions for installing from external sources
 # =============================================================================
-# Provides utilities for downloading from GitHub releases, extracting archives,
-# and installing binaries to system paths.
+# Dependencies: log.sh
+# Provides: get_arch_string, get_os_string, cleanup_temp, download_file,
+#           get_github_latest_version, download_github_release,
+#           download_github_latest, extract_archive, install_binary
 # =============================================================================
 
-# Guard against re-sourcing (readonly variables can't be redeclared)
-[[ -n "${_INSTALL_HELPERS_SH_LOADED:-}" ]] && return 0
-_INSTALL_HELPERS_SH_LOADED=true
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_INSTALL_HELPERS_LOADED:-}" ]] && return 0
+_DOTFILES_INSTALL_HELPERS_LOADED=1
 
 # shellcheck source=lib/log.sh
 source "${BASH_SOURCE%/*}/log.sh"

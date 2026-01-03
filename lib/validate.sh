@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Validation helpers for dotfiles scripts
+# lib/validate.sh - Validation helpers for dotfiles scripts
 # =============================================================================
-# Provides reusable validation functions for checking commands, files, and
-# running validation checks with consistent logging.
-#
-# Dependencies: lib/log.sh (for log_ok, log_error, log_warn, log_info)
-#
-# Usage: source this file after sourcing lib/log.sh
+# Dependencies: log.sh
+# Provides: has_command, check, check_warn, check_file, require_cmd
 # =============================================================================
+
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_VALIDATE_LOADED:-}" ]] && return 0
+_DOTFILES_VALIDATE_LOADED=1
+
+# Source dependencies
+# shellcheck source=lib/log.sh
+source "${BASH_SOURCE%/*}/log.sh"
 
 # Check if a command exists in PATH
 # Usage: has_command <cmd>

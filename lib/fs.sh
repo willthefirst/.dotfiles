@@ -1,8 +1,20 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# File system utilities
+# lib/fs.sh - File system utilities
 # =============================================================================
+# Dependencies: log.sh
+# Provides: ensure_dir, resolve_link, file_or_link_exists, is_dotfiles_managed,
+#           install_to_bin, symlink_matches
+# =============================================================================
+
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_FS_LOADED:-}" ]] && return 0
+_DOTFILES_FS_LOADED=1
+
+# Source dependencies
+# shellcheck source=lib/log.sh
+source "${BASH_SOURCE%/*}/log.sh"
 
 # Create directory if it doesn't exist
 # Usage: ensure_dir <path>

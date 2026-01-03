@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Conflict data structures, constants, constructors, and parsers
+# lib/conflict-data.sh - Conflict data structures, constants, and parsers
 # =============================================================================
-# Error handling conventions:
-#   - Check functions (is_*, has_*) return 0/1, no logging
-#   - Data-returning functions output to stdout, errors to stderr
+# Dependencies: none
+# Provides: CONFLICT_TYPE_*, PARENT_STATUS_*, make_file_conflict,
+#           make_symlink_conflict, parse_conflict_type, parse_conflict_path,
+#           parse_conflict_target
 # =============================================================================
 
 # =============================================================================
@@ -16,9 +17,9 @@
 # With package prefix: "pkg:type:path[:target]"
 # =============================================================================
 
-# Guard against re-sourcing (readonly variables can't be redeclared)
-[[ -n "${_CONFLICT_DATA_SH_LOADED:-}" ]] && return 0
-_CONFLICT_DATA_SH_LOADED=true
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_CONFLICT_DATA_LOADED:-}" ]] && return 0
+_DOTFILES_CONFLICT_DATA_LOADED=1
 
 # Conflict type constants
 readonly CONFLICT_TYPE_FILE="file"

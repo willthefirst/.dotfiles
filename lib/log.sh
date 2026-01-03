@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Logging utilities for dotfiles scripts
+# lib/log.sh - Logging utilities for dotfiles scripts
+# =============================================================================
+# Dependencies: none
+# Provides: log_info, log_step, log_ok, log_warn, log_error, log_section
 # =============================================================================
 
-# Guard against re-sourcing (readonly variables can't be redeclared)
-[[ -n "${_LOG_SH_LOADED:-}" ]] && return 0
-_LOG_SH_LOADED=true
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_LOG_LOADED:-}" ]] && return 0
+_DOTFILES_LOG_LOADED=1
 
 # Colors for output
 readonly LOG_COLOR_RED='\033[0;31m'

@@ -10,27 +10,9 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source modules
-# shellcheck source=lib/common.sh
-source "$SCRIPT_DIR/lib/common.sh"
-# shellcheck source=lib/config.sh
-source "$SCRIPT_DIR/lib/config.sh"
-# shellcheck source=lib/cli.sh
-source "$SCRIPT_DIR/lib/cli.sh"
-# shellcheck source=lib/conflicts.sh
-source "$SCRIPT_DIR/lib/conflicts.sh"
-# shellcheck source=lib/backup.sh
-source "$SCRIPT_DIR/lib/backup.sh"
-# shellcheck source=lib/deploy.sh
-source "$SCRIPT_DIR/lib/deploy.sh"
-# shellcheck source=lib/verify.sh
-source "$SCRIPT_DIR/lib/verify.sh"
-# shellcheck source=lib/validate.sh
-source "$SCRIPT_DIR/lib/validate.sh"
-# shellcheck source=lib/pkg-manager.sh
-source "$SCRIPT_DIR/lib/pkg-manager.sh"
-# shellcheck source=lib/deps.sh
-source "$SCRIPT_DIR/lib/deps.sh"
+# Source all library modules via central initialization
+# shellcheck source=lib/init.sh
+source "$SCRIPT_DIR/lib/init.sh"
 
 # Main workflow
 main() {
@@ -48,6 +30,7 @@ main() {
     if [[ "$INSTALL_WITH_DEPS" == "true" ]]; then
         SETUP_PHASE="1/2"
         install_all_deps "${target_packages[@]}"
+        # shellcheck disable=SC2034  # SETUP_PHASE is used by log_section in log.sh
         SETUP_PHASE="2/2"
     fi
 
