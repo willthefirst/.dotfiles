@@ -5,22 +5,14 @@
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-
-# Source required modules
-source "$ROOT_DIR/lib/common.sh"
-source "$ROOT_DIR/lib/config.sh"
-source "$ROOT_DIR/lib/conflicts.sh"
 # shellcheck source=tests/helpers.sh
 source "$SCRIPT_DIR/helpers.sh"
+init_test_env conflicts
 
+# Custom setup to create mock zsh package
 setup() {
     setup_test_env
     create_mock_package "zsh" ".zshrc"
-}
-
-teardown() {
-    teardown_test_env
 }
 
 # =============================================================================
@@ -90,10 +82,4 @@ test_get_package_conflicts_with_nonexistent_dir() {
 # =============================================================================
 # Run all tests
 # =============================================================================
-run_test test_detects_file_conflict
-run_test test_detects_symlink_conflict
-run_test test_no_conflict_when_correctly_linked
-run_test test_no_conflict_when_nothing_exists
-run_test test_detects_directory_symlink_conflict
-run_test test_check_all_conflicts_with_empty_packages
-run_test test_get_package_conflicts_with_nonexistent_dir
+run_all_tests

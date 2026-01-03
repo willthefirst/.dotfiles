@@ -5,22 +5,12 @@
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-
-# Source required modules
-source "$ROOT_DIR/lib/common.sh"
-source "$ROOT_DIR/lib/config.sh"
-source "$ROOT_DIR/lib/backup.sh"
 # shellcheck source=tests/helpers.sh
 source "$SCRIPT_DIR/helpers.sh"
+init_test_env backup
 
-setup() {
-    setup_test_env true
-}
-
-teardown() {
-    teardown_test_env
-}
+# Override default setup to create dotfiles structure
+setup() { setup_test_env true; }
 
 # =============================================================================
 # Test functions - each returns 0 for pass, non-zero for fail
@@ -78,9 +68,4 @@ test_create_backup_handles_broken_symlinks() {
 # =============================================================================
 # Run all tests
 # =============================================================================
-run_test test_needs_backup_returns_true_for_regular_file
-run_test test_needs_backup_returns_false_for_stow_managed
-run_test test_needs_backup_returns_false_when_nothing_exists
-run_test test_needs_backup_returns_true_for_external_symlink
-run_test test_create_backup_creates_directory
-run_test test_create_backup_handles_broken_symlinks
+run_all_tests

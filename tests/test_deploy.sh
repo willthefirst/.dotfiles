@@ -5,25 +5,9 @@
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-
-# Source required modules
-source "$ROOT_DIR/lib/common.sh"
-source "$ROOT_DIR/lib/config.sh"
-source "$ROOT_DIR/lib/conflicts.sh"
-source "$ROOT_DIR/lib/backup.sh"
-source "$ROOT_DIR/lib/deploy.sh"
-source "$ROOT_DIR/lib/verify.sh"
 # shellcheck source=tests/helpers.sh
 source "$SCRIPT_DIR/helpers.sh"
-
-setup() {
-    setup_test_env
-}
-
-teardown() {
-    teardown_test_env
-}
+init_test_env conflicts backup deploy verify
 
 # =============================================================================
 # Test functions - each returns 0 for pass, non-zero for fail
@@ -213,21 +197,4 @@ test_deploy_packages_handles_empty_package_list() {
 # =============================================================================
 # Run all tests
 # =============================================================================
-run_test test_create_directories_creates_config
-run_test test_create_directories_creates_ssh_sockets
-run_test test_create_directories_sets_ssh_permissions
-run_test test_deploy_packages_creates_symlinks
-run_test test_is_dotfiles_managed_detects_direct_symlink
-run_test test_is_dotfiles_managed_detects_parent_symlink
-run_test test_deploy_packages_handles_nested_config
-run_test test_deploy_packages_warns_on_missing_package
-run_test test_deploy_packages_detects_file_instead_of_directory
-run_test test_config_has_content
-run_test test_no_broken_symlinks_in_app_support
-run_test test_verify_installation_reports_all_good
-run_test test_verify_installation_warns_on_unmanaged_file
-run_test test_verify_installation_warns_on_missing_file
-run_test test_verify_installation_counts_multiple_configs
-run_test test_deploy_packages_returns_failure_on_conflict
-run_test test_deploy_packages_outputs_error_on_failure
-run_test test_deploy_packages_handles_empty_package_list
+run_all_tests

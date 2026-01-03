@@ -5,15 +5,11 @@
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-
-# Source required modules
-source "$ROOT_DIR/lib/common.sh"
-source "$ROOT_DIR/lib/config.sh"
-source "$ROOT_DIR/lib/deps.sh"
 # shellcheck source=tests/helpers.sh
 source "$SCRIPT_DIR/helpers.sh"
+init_test_env deps
 
+# Custom setup/teardown for dry run mode
 setup() {
     setup_test_env true
     deps_dry_run_enable  # Don't actually install packages in tests
@@ -267,24 +263,4 @@ test_dry_run_mode_prevents_install() {
 # =============================================================================
 # Run all tests
 # =============================================================================
-run_test test_is_darwin_or_is_linux
-run_test test_get_platform_suffix_returns_valid
-run_test test_read_deps_file_handles_missing_file
-run_test test_read_deps_file_reads_packages
-run_test test_read_deps_file_skips_comments
-run_test test_read_deps_file_skips_empty_lines
-run_test test_read_deps_file_handles_inline_comments
-run_test test_read_deps_file_handles_tabs
-run_test test_read_deps_file_handles_crlf_line_endings
-run_test test_read_deps_file_handles_mixed_whitespace
-run_test test_install_package_deps_skips_missing_package
-run_test test_install_package_deps_skips_package_without_deps
-run_test test_install_package_deps_reads_common_deps
-run_test test_install_package_deps_reads_platform_deps
-run_test test_install_package_deps_runs_install_function
-run_test test_install_order_runs_install_sh_before_deps
-run_test test_has_command_finds_existing
-run_test test_has_command_fails_for_missing
-run_test test_ensure_dir_creates_directory
-run_test test_ensure_dir_handles_existing
-run_test test_dry_run_mode_prevents_install
+run_all_tests

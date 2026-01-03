@@ -1,14 +1,48 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Test helpers - shared setup/teardown for all test files
+# Test framework - setup/teardown and test runner for all test files
 # =============================================================================
+# Usage in test files:
+#   source "$SCRIPT_DIR/helpers.sh"
+#   init_test_env [modules...]   # Sources lib modules, e.g., "backup" "deploy"
+#   # Define test_* functions
+#   run_all_tests                # Auto-discovers and runs test_* functions
+# =============================================================================
+
+HELPERS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$HELPERS_DIR")"
 
 # Global test state
 TEST_HOME=""
 TEST_DOTFILES=""
 ORIGINAL_HOME=""
 ORIGINAL_DOTFILES_DIR=""
+
+# =============================================================================
+# Test initialization - reduces boilerplate in test files
+# =============================================================================
+
+# Initialize test environment and source required modules
+# Usage: init_test_env [module1] [module2] ...
+# Example: init_test_env backup deploy
+# Always sources: common.sh, config.sh
+init_test_env() {
+    # Always source common and config
+    # shellcheck source=lib/common.sh
+    source "$ROOT_DIR/lib/common.sh"
+    # shellcheck source=lib/config.sh
+    source "$ROOT_DIR/lib/config.sh"
+
+    # Source additional modules passed as arguments
+    for module in "$@"; do
+        local module_path="$ROOT_DIR/lib/${module}.sh"
+        if [[ -f "$module_path" ]]; then
+            # shellcheck disable=SC1090
+            source "$module_path"
+        fi
+    done
+}
 
 # Setup test environment with isolated HOME and DOTFILES_DIR
 # Usage: setup_test_env [create_dotfiles_structure]
@@ -193,4 +227,32 @@ assert_contains() {
     fi
     echo "  Expected output to contain: $expected"
     return 1
+}
+
+# =============================================================================
+# Auto-discovery test runner
+# =============================================================================
+
+# Run all test_* functions in the current script
+# Auto-discovers functions, runs each with setup/teardown
+# Usage: run_all_tests
+run_all_tests() {
+    # Get all function names starting with test_
+    local test_functions
+    test_functions=$(declare -F | awk '{print $3}' | grep '^test_')
+
+    for test_func in $test_functions; do
+        run_test "$test_func"
+    done
+}
+
+# Default setup/teardown - tests can override these
+# Default setup creates isolated test environment
+setup() {
+    setup_test_env
+}
+
+# Default teardown cleans up test environment
+teardown() {
+    teardown_test_env
 }
