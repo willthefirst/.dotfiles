@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# CLI argument parsing for install.sh
+# lib/cli.sh - CLI argument parsing for install.sh
 # =============================================================================
-# This module provides:
-#   - parse_install_args: Parse command line arguments
-#   - show_install_help: Display help message
+# Dependencies: log.sh
+# Provides: parse_install_args, show_install_help, INSTALL_* variables
 # =============================================================================
 
-# Source guard - prevent double sourcing
-[[ -n "${_CLI_SH_LOADED:-}" ]] && return 0
-readonly _CLI_SH_LOADED=1
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_CLI_LOADED:-}" ]] && return 0
+_DOTFILES_CLI_LOADED=1
+
+# Source dependencies
+# shellcheck source=lib/log.sh
+source "${BASH_SOURCE%/*}/log.sh"
 
 # =============================================================================
 # Install configuration variables (set by parse_install_args)

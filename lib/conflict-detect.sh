@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Conflict detection logic for stow packages
+# lib/conflict-detect.sh - Conflict detection logic for stow packages
 # =============================================================================
-# Error handling conventions:
-#   - Check functions (is_*, has_*) return 0/1, no logging
-#   - Data-returning functions output to stdout, errors to stderr
+# Dependencies: conflict-data.sh, fs.sh
+# Provides: get_package_conflicts, report_symlink_mismatch, is_already_checked,
+#           check_directory_conflict, check_parent_symlink, check_file_conflict
 # =============================================================================
 
-# Guard against re-sourcing
-[[ -n "${_CONFLICT_DETECT_SH_LOADED:-}" ]] && return 0
-_CONFLICT_DETECT_SH_LOADED=true
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_CONFLICT_DETECT_LOADED:-}" ]] && return 0
+_DOTFILES_CONFLICT_DETECT_LOADED=1
 
 # Source dependencies
 # shellcheck source=lib/conflict-data.sh
 source "${BASH_SOURCE%/*}/conflict-data.sh"
+# shellcheck source=lib/fs.sh
+source "${BASH_SOURCE%/*}/fs.sh"
 
 # =============================================================================
 # Conflict detection helpers

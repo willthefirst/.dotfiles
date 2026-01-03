@@ -11,12 +11,9 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# shellcheck source=lib/common.sh
-source "$SCRIPT_DIR/lib/common.sh"
-# shellcheck source=lib/config.sh
-source "$SCRIPT_DIR/lib/config.sh"
-# shellcheck source=lib/validate.sh
-source "$SCRIPT_DIR/lib/validate.sh"
+# Source all library modules via central initialization
+# shellcheck source=lib/init.sh
+source "$SCRIPT_DIR/lib/init.sh"
 
 errors=0
 

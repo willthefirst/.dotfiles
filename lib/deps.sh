@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Dependency installation module for dotfiles
+# lib/deps.sh - Dependency installation module for dotfiles
 # =============================================================================
-# Error handling conventions:
-#   - Check functions (is_*, has_*) return 0/1, no logging
-#   - User-facing functions log errors before returning non-zero
-#   - Data-returning functions output to stdout, errors to stderr
+# Dependencies: log.sh, platform.sh, config.sh, validate.sh, pkg-manager.sh
+# Provides: read_deps_file, get_platform_suffix, install_package_deps,
+#           install_single_dep, install_all_deps
 # =============================================================================
 # Installs actual programs (not just their configs) using system package managers.
 # Supports per-package dependency specification via deps files and custom install scripts.
@@ -42,10 +41,21 @@
 # This order allows install.sh to set up prerequisites before deps are installed.
 # =============================================================================
 
-# Source dependencies - these must be sourced before this module
-# Required: lib/common.sh (provides log.sh, platform.sh, fs.sh)
-#           lib/validate.sh (provides has_command)
-#           lib/pkg-manager.sh (provides pkg_install, pkg_installed)
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_DEPS_LOADED:-}" ]] && return 0
+_DOTFILES_DEPS_LOADED=1
+
+# Source dependencies
+# shellcheck source=lib/log.sh
+source "${BASH_SOURCE%/*}/log.sh"
+# shellcheck source=lib/platform.sh
+source "${BASH_SOURCE%/*}/platform.sh"
+# shellcheck source=lib/config.sh
+source "${BASH_SOURCE%/*}/config.sh"
+# shellcheck source=lib/validate.sh
+source "${BASH_SOURCE%/*}/validate.sh"
+# shellcheck source=lib/pkg-manager.sh
+source "${BASH_SOURCE%/*}/pkg-manager.sh"
 
 # =============================================================================
 # Dependency file parsing

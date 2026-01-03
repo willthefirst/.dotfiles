@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Package manager abstraction
+# lib/pkg-manager.sh - Package manager abstraction
 # =============================================================================
-# Provides platform-specific package installation using brew (macOS) or apt (Linux).
-#
-# Dependencies: lib/platform.sh (for is_macos, is_linux)
-#               lib/log.sh (for log_error)
-#
-# Usage: source this file after sourcing lib/platform.sh and lib/log.sh
+# Dependencies: log.sh, platform.sh
+# Provides: pkg_install, pkg_installed
 # =============================================================================
+
+# Source guard - prevent multiple loading
+[[ -n "${_DOTFILES_PKG_MANAGER_LOADED:-}" ]] && return 0
+_DOTFILES_PKG_MANAGER_LOADED=1
+
+# Source dependencies
+# shellcheck source=lib/log.sh
+source "${BASH_SOURCE%/*}/log.sh"
+# shellcheck source=lib/platform.sh
+source "${BASH_SOURCE%/*}/platform.sh"
 
 # Install packages using the system package manager
 # Usage: pkg_install <packages...>
