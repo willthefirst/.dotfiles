@@ -57,7 +57,7 @@ validate:
 
 clean:
 	@echo "Removing backups older than 7 days..."
-	find ~ -maxdepth 1 -name ".dotfiles-backup-*" -mtime +7 -exec rm -rf {} \;
+	@. ./lib/config.sh && find ~ -maxdepth 1 -name "$${BACKUP_PREFIX}*" -mtime +$${BACKUP_RETENTION_DAYS} -exec rm -rf {} \;
 
 uninstall:
 	cd $(HOME)/.dotfiles && stow -D -t ~ zsh git nvim ssh ghostty 2>&1 | grep -v "BUG in find_stowed_path" || true

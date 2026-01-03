@@ -7,6 +7,12 @@
 # Directory paths
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 
+# Backup configuration
+# shellcheck disable=SC2034
+BACKUP_PREFIX=".dotfiles-backup-"
+# shellcheck disable=SC2034
+BACKUP_RETENTION_DAYS=7
+
 # =============================================================================
 # Package Configuration
 # Single source of truth: package -> backup_path -> verify_path

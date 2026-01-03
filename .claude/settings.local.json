@@ -18,7 +18,8 @@
       "Bash(grep:*)",
       "Bash(find:*)",
       "Bash(make test:*)",
-      "Bash(make validate:*)"
+      "Bash(make validate:*)",
+      "Bash(git push)"
     ]
   }
 }

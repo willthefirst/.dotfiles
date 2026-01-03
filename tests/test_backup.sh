@@ -54,7 +54,7 @@ test_create_backup_creates_directory() {
     create_backup "$TEST_HOME/.zshrc" > /dev/null 2>&1
 
     local backup_dir
-    backup_dir=$(find "$TEST_HOME" -maxdepth 1 -type d -name ".dotfiles-backup-*" 2>/dev/null | head -1)
+    backup_dir=$(find "$TEST_HOME" -maxdepth 1 -type d -name "${BACKUP_PREFIX}*" 2>/dev/null | head -1)
 
     assert "Expected backup directory with .zshrc file" test -n "$backup_dir" -a -f "$backup_dir/.zshrc"
 }
@@ -70,7 +70,7 @@ test_create_backup_handles_broken_symlinks() {
     }
 
     local backup_dir
-    backup_dir=$(find "$TEST_HOME" -maxdepth 1 -type d -name ".dotfiles-backup-*" 2>/dev/null | head -1)
+    backup_dir=$(find "$TEST_HOME" -maxdepth 1 -type d -name "${BACKUP_PREFIX}*" 2>/dev/null | head -1)
 
     assert "Backup succeeded but directory not found" test -n "$backup_dir" -a -d "$backup_dir/testdir"
 }
