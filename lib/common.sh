@@ -64,11 +64,6 @@ is_linux() {
 # Setup phase tracking (set by install.sh for multi-step output)
 SETUP_PHASE=""
 
-# Print section header (no-op, kept for compatibility)
-print_header() {
-    :
-}
-
 # Print next steps after installation
 print_next_steps() {
     echo ""

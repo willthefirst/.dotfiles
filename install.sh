@@ -99,7 +99,6 @@ main() {
 
   # Deps-only mode: just install dependencies and exit
   if $DEPS_ONLY; then
-    print_header "Installing Programs"
     install_all_deps "${target_packages[@]}"
     return
   fi
@@ -109,9 +108,6 @@ main() {
     SETUP_PHASE="1/2"
     install_all_deps "${target_packages[@]}"
     SETUP_PHASE="2/2"
-  else
-    # Configure-only mode
-    print_header
   fi
 
   # Stow workflow
