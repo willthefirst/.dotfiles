@@ -246,15 +246,9 @@ remove_conflict() {
     local path="$1"
     local short_path="${path#"$HOME/"}"
 
-    if [[ -L "$path" ]]; then
-        log_step "Removing conflict: ~/$short_path"
-        rm "$path"
-    elif [[ -d "$path" ]]; then
+    if [[ -e "$path" || -L "$path" ]]; then
         log_step "Removing conflict: ~/$short_path"
         rm -rf "$path"
-    elif [[ -f "$path" ]]; then
-        log_step "Removing conflict: ~/$short_path"
-        rm "$path"
     fi
 }
 
