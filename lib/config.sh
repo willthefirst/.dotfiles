@@ -30,9 +30,15 @@ BACKUP_FILES=()
 # shellcheck disable=SC2034
 VERIFY_SYMLINKS=()
 
+# Track initialization state (ensures idempotent behavior)
+_CONFIG_INITIALIZED=false
+
 # Initialize derived arrays from PACKAGE_CONFIG
-# Call this after sourcing config.sh
+# Safe to call multiple times - only runs once unless reset
 init_config() {
+    # Skip if already initialized (idempotent)
+    $_CONFIG_INITIALIZED && return 0
+
     for entry in "${PACKAGE_CONFIG[@]}"; do
         local pkg="${entry%%:*}"
         local rest="${entry#*:}"
@@ -47,6 +53,8 @@ init_config() {
         BACKUP_FILES+=("$backup")
         VERIFY_SYMLINKS+=("$verify")
     done
+
+    _CONFIG_INITIALIZED=true
 }
 
 # Auto-initialize when sourced
