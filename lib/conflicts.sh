@@ -4,6 +4,31 @@
 # Conflict detection and resolution for stow packages
 # =============================================================================
 
+# =============================================================================
+# Conflict string format: "type:path[:target]"
+#   - type: "file" or "symlink"
+#   - path: the conflicting path
+#   - target: symlink target (only for symlink type)
+# With package prefix: "pkg:type:path[:target]"
+# =============================================================================
+
+# Parse conflict string and extract the path component
+# Usage: parse_conflict_path "type:path[:target]" or "pkg:type:path[:target]"
+# Outputs: the path component
+parse_conflict_path() {
+    local conflict="$1"
+    local rest="${conflict#*:}"  # Remove first field (type or pkg)
+    # If this was pkg:type:path, we need to skip type too
+    if [[ "$rest" == *:* ]]; then
+        local maybe_type="${rest%%:*}"
+        if [[ "$maybe_type" == "file" || "$maybe_type" == "symlink" ]]; then
+            rest="${rest#*:}"  # Skip the type field
+        fi
+    fi
+    # Now extract path (everything before optional :target)
+    echo "${rest%%:*}"
+}
+
 # Report symlink conflict if symlink doesn't match expected target
 # Usage: report_symlink_mismatch target_path expected_target
 # Outputs: "symlink:path:actual_target" if mismatch, nothing if matches
@@ -201,9 +226,8 @@ check_all_conflicts() {
         echo ""
         echo "  Option 3: Remove manually, then re-run:"
         for conflict in "${all_conflicts[@]}"; do
-            local rest="${conflict#*:}"
-            local path="${rest#*:}"
-            path="${path%%:*}"
+            local path
+            path=$(parse_conflict_path "$conflict")
             echo "    rm \"$path\""
         done
         echo "    make configure"
@@ -265,8 +289,8 @@ handle_conflicts() {
         while IFS= read -r conflict; do
             [[ -z "$conflict" ]] && continue
 
-            local path="${conflict#*:}"
-            path="${path%%:*}"
+            local path
+            path=$(parse_conflict_path "$conflict")
 
             # Safety check: never remove with empty path
             if [[ -z "$path" ]]; then
