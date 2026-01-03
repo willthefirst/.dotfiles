@@ -112,3 +112,38 @@ init_config() {
 
 # Auto-initialize when sourced
 init_config
+
+# =============================================================================
+# Package Resolution
+# =============================================================================
+
+# Check if a package name is valid (exists in PACKAGES array)
+# Usage: is_valid_package "package_name"
+# Returns: 0 if valid, 1 if invalid
+is_valid_package() {
+    local pkg="$1"
+    [[ " ${PACKAGES[*]} " == *" $pkg "* ]]
+}
+
+# Resolve package list: use specified packages or all if none specified
+# Usage: resolve_packages [package...]
+# Output: Space-separated list of valid package names
+resolve_packages() {
+    local requested=("$@")
+
+    if [[ ${#requested[@]} -eq 0 ]]; then
+        # No packages specified - return all
+        echo "${PACKAGES[*]}"
+    else
+        # Validate and return requested packages
+        local valid_packages=()
+        for pkg in "${requested[@]}"; do
+            if is_valid_package "$pkg"; then
+                valid_packages+=("$pkg")
+            else
+                log_warn "Unknown package: $pkg (skipping)"
+            fi
+        done
+        echo "${valid_packages[*]}"
+    fi
+}
