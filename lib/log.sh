@@ -27,8 +27,8 @@ readonly LOG_INDENT='  '
 log_info() { echo -e "${LOG_INDENT}$1"; }
 log_step() { echo -e "${LOG_INDENT}${LOG_COLOR_GREEN}${LOG_ICON_STEP}${LOG_COLOR_NC} $1"; }
 log_ok() { echo -e "${LOG_INDENT}${LOG_COLOR_GREEN}${LOG_ICON_OK}${LOG_COLOR_NC} $1"; }
-log_warn() { echo -e "${LOG_INDENT}${LOG_COLOR_YELLOW}${LOG_ICON_WARN}${LOG_COLOR_NC} $1"; }
-log_error() { echo -e "${LOG_INDENT}${LOG_COLOR_RED}${LOG_ICON_ERROR}${LOG_COLOR_NC} $1"; }
+log_warn() { echo -e "${LOG_INDENT}${LOG_COLOR_YELLOW}${LOG_ICON_WARN}${LOG_COLOR_NC} $1" >&2; }
+log_error() { echo -e "${LOG_INDENT}${LOG_COLOR_RED}${LOG_ICON_ERROR}${LOG_COLOR_NC} $1" >&2; }
 
 # Track if we've printed a section yet (for consistent newline handling)
 _FIRST_SECTION=true

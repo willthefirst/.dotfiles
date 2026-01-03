@@ -15,6 +15,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 # shellcheck source=lib/config.sh
 source "$SCRIPT_DIR/lib/config.sh"
+# shellcheck source=lib/cli.sh
+source "$SCRIPT_DIR/lib/cli.sh"
 # shellcheck source=lib/conflicts.sh
 source "$SCRIPT_DIR/lib/conflicts.sh"
 # shellcheck source=lib/backup.sh
@@ -30,103 +32,38 @@ source "$SCRIPT_DIR/lib/pkg-manager.sh"
 # shellcheck source=lib/deps.sh
 source "$SCRIPT_DIR/lib/deps.sh"
 
-# CLI flags
-FORCE_MODE=false
-ADOPT_MODE=false
-DEPS_ONLY=false
-WITH_DEPS=false
-SELECTED_PACKAGES=()
-
-# Parse command line arguments
-parse_args() {
-  while [[ $# -gt 0 ]]; do
-    case $1 in
-    --force)
-      FORCE_MODE=true
-      shift
-      ;;
-    --adopt)
-      ADOPT_MODE=true
-      shift
-      ;;
-    --deps-only)
-      DEPS_ONLY=true
-      shift
-      ;;
-    --with-deps)
-      WITH_DEPS=true
-      shift
-      ;;
-    --help | -h)
-      echo "Usage: ./install.sh [OPTIONS] [PACKAGES...]"
-      echo ""
-      echo "Options:"
-      echo "  --force      Remove conflicting symlinks before stowing"
-      echo "  --adopt      Adopt existing files into stow packages"
-      echo "  --deps-only  Install dependencies only (no stow)"
-      echo "  --with-deps  Install dependencies before stowing"
-      echo "  --help       Show this help message"
-      echo ""
-      echo "Examples:"
-      echo "  ./install.sh                    # Stow all packages"
-      echo "  ./install.sh --with-deps        # Install deps + stow all"
-      echo "  ./install.sh --deps-only nvim   # Install deps for nvim only"
-      exit 0
-      ;;
-    -*)
-      echo "Unknown option: $1"
-      echo "Run './install.sh --help' for usage"
-      exit 1
-      ;;
-    *)
-      # Positional argument = package name
-      SELECTED_PACKAGES+=("$1")
-      shift
-      ;;
-    esac
-  done
-}
-
-# Get packages to operate on (selected or all)
-get_target_packages() {
-  if [[ ${#SELECTED_PACKAGES[@]} -gt 0 ]]; then
-    echo "${SELECTED_PACKAGES[@]}"
-  else
-    echo "${PACKAGES[@]}"
-  fi
-}
-
 # Main workflow
 main() {
-  local target_packages
-  read -ra target_packages <<< "$(get_target_packages)"
+    # Resolve target packages
+    local target_packages
+    read -ra target_packages <<< "$(resolve_packages "${INSTALL_PACKAGES[@]}")"
 
-  # Deps-only mode: just install dependencies and exit
-  if $DEPS_ONLY; then
-    install_all_deps "${target_packages[@]}"
-    return
-  fi
+    # Deps-only mode: just install dependencies and exit
+    if [[ "$INSTALL_DEPS_ONLY" == "true" ]]; then
+        install_all_deps "${target_packages[@]}"
+        return
+    fi
 
-  # Full setup mode: install dependencies then configure
-  if $WITH_DEPS; then
-    SETUP_PHASE="1/2"
-    install_all_deps "${target_packages[@]}"
-    SETUP_PHASE="2/2"
-  fi
+    # Full setup mode: install dependencies then configure
+    if [[ "$INSTALL_WITH_DEPS" == "true" ]]; then
+        SETUP_PHASE="1/2"
+        install_all_deps "${target_packages[@]}"
+        SETUP_PHASE="2/2"
+    fi
 
-  # Stow workflow
-  log_section "Configuring dotfiles..."
-  check_prerequisites
-  if $FORCE_MODE; then
-    create_backup --skip "${BACKUP_FILES[@]}"
-  else
-    create_backup "${BACKUP_FILES[@]}"
-  fi
-  create_directories
-  deploy_base "$FORCE_MODE" "$ADOPT_MODE"
-  verify_installation
-  print_next_steps
+    # Stow workflow
+    log_section "Configuring dotfiles..."
+    check_prerequisites
+    if [[ "$INSTALL_FORCE" == "true" ]]; then
+        create_backup --skip "${BACKUP_FILES[@]}"
+    else
+        create_backup "${BACKUP_FILES[@]}"
+    fi
+    create_directories
+    deploy_base "$INSTALL_FORCE" "$INSTALL_ADOPT"
+    verify_installation
+    print_next_steps
 }
 
-parse_args "$@"
+parse_install_args "$@"
 main
