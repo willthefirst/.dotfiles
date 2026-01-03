@@ -9,6 +9,13 @@
 #   - Data-returning functions output to stdout, errors to stderr
 # =============================================================================
 
+# Guard against re-sourcing (readonly variables can't be redeclared)
+[[ -n "${_DEPLOY_SH_LOADED:-}" ]] && return 0
+_DEPLOY_SH_LOADED=true
+
+# SSH directory permissions (owner read/write/execute only)
+readonly SSH_DIR_PERMISSIONS=700
+
 # Filter out LINK: lines from stow output (verbose info we don't need)
 filter_stow_output() {
     grep -v "^LINK:" || true
@@ -25,8 +32,8 @@ create_directories() {
         log_error "Failed to create ~/.ssh/sockets"
         return 1
     fi
-    chmod 700 "$HOME/.ssh" 2>/dev/null || true
-    chmod 700 "$HOME/.ssh/sockets" 2>/dev/null || true
+    chmod "$SSH_DIR_PERMISSIONS" "$HOME/.ssh" 2>/dev/null || true
+    chmod "$SSH_DIR_PERMISSIONS" "$HOME/.ssh/sockets" 2>/dev/null || true
     return 0
 }
 

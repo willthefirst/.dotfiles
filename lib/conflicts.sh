@@ -17,6 +17,10 @@
 # With package prefix: "pkg:type:path[:target]"
 # =============================================================================
 
+# Guard against re-sourcing (readonly variables can't be redeclared)
+[[ -n "${_CONFLICTS_SH_LOADED:-}" ]] && return 0
+_CONFLICTS_SH_LOADED=true
+
 # Conflict type constants
 readonly CONFLICT_TYPE_FILE="file"
 readonly CONFLICT_TYPE_SYMLINK="symlink"
