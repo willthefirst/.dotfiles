@@ -15,7 +15,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 # Check that lib/*.sh files use log_* functions instead of raw echo for user messages
 # Allowed exceptions:
-#   - common.sh (defines the log functions)
+#   - log.sh (defines the log functions)
 #   - echo "" (blank lines)
 #   - echo "$var" or echo "${var}" (function return values)
 #   - echo "word" (single word returns like "darwin", "linux", "managed")
@@ -25,8 +25,8 @@ test_use_log_functions() {
     local violations=()
 
     for file in "$ROOT_DIR"/lib/*.sh; do
-        # Skip common.sh - it defines the log functions
-        [[ "$(basename "$file")" == "common.sh" ]] && continue
+        # Skip log.sh - it defines the log functions
+        [[ "$(basename "$file")" == "log.sh" ]] && continue
 
         while IFS= read -r line; do
             [[ -z "$line" ]] && continue
