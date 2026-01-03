@@ -35,7 +35,7 @@ make validate       # Check config syntax
 
 1. Create package: `mkdir ~/.dotfiles/newapp`
 2. Mirror the home directory structure inside it
-3. Add to `PACKAGES` in `lib/config.sh`
+3. Add to `PACKAGE_CONFIG` in `lib/config.sh`
 4. Run `./install.sh`
 
 ## License

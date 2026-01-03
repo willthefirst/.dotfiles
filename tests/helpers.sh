@@ -78,9 +78,9 @@ assert_symlink() {
     fi
 
     local actual
-    actual=$(readlink -f "$link" 2>/dev/null)
+    actual=$(resolve_link "$link")
     local expected_resolved
-    expected_resolved=$(readlink -f "$expected" 2>/dev/null || echo "$expected")
+    expected_resolved=$(resolve_link "$expected")
 
     if [[ "$actual" != "$expected_resolved" ]]; then
         echo "FAIL: Symlink $link points to $actual, expected $expected_resolved"

@@ -9,7 +9,15 @@
       "Bash(chmod:*)",
       "Bash(mkdir:*)",
       "Bash(mv:*)",
-      "Bash(make lint:*)"
+      "Bash(make lint:*)",
+      "Bash(/Users/willm/.dotfiles/tests/test_consistency.sh:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(done)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(make test:*)"
     ]
   }
 }

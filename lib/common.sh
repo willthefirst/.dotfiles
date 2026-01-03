@@ -83,6 +83,13 @@ print_next_steps() {
 # File system helpers
 # =============================================================================
 
+# Resolve a path to its absolute target (follows symlinks)
+# Usage: resolve_link "/path/to/link"
+# Outputs: resolved path, or original path if resolution fails
+resolve_link() {
+    readlink -f "$1" 2>/dev/null || echo "$1"
+}
+
 # Check if a file or symlink exists (handles broken symlinks correctly)
 # Usage: file_or_link_exists "/path/to/file"
 # Returns 0 if exists, 1 if not
@@ -97,13 +104,13 @@ is_dotfiles_managed() {
     local path="$1"
     local check_path="$path"
     local dotfiles_resolved
-    dotfiles_resolved=$(readlink -f "$DOTFILES_DIR" 2>/dev/null || echo "$DOTFILES_DIR")
+    dotfiles_resolved=$(resolve_link "$DOTFILES_DIR")
 
     # Check if the path itself or any parent is a symlink into dotfiles
     while [[ "$check_path" != "$HOME" && "$check_path" != "/" ]]; do
         if [[ -L "$check_path" ]]; then
             local target
-            target=$(readlink -f "$check_path" 2>/dev/null || echo "")
+            target=$(resolve_link "$check_path")
             if [[ "$target" == *"$dotfiles_resolved"* ]]; then
                 return 0
             fi
@@ -120,8 +127,8 @@ symlink_matches() {
     local link_path="$1"
     local expected="$2"
     local actual
-    actual=$(readlink -f "$link_path" 2>/dev/null || echo "")
+    actual=$(resolve_link "$link_path")
     local expected_resolved
-    expected_resolved=$(readlink -f "$expected" 2>/dev/null || echo "$expected")
+    expected_resolved=$(resolve_link "$expected")
     [[ "$actual" == "$expected_resolved" ]]
 }
