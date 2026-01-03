@@ -1,25 +1,26 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # =============================================================================
-# Simple logging wrapper for use in Makefile
+# Thin wrapper for Makefile to use lib/log.sh functions
 # Usage: ./scripts/log.sh <level> <message>
 # Levels: ok, error, warn, step, info
 # =============================================================================
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source the main logging module
+# shellcheck source=lib/log.sh
+source "$SCRIPT_DIR/../lib/log.sh"
 
 level="$1"
 shift
 message="$*"
 
 case "$level" in
-    ok)    echo -e "  ${GREEN}✓${NC} $message" ;;
-    error) echo -e "  ${RED}✗${NC} $message" ;;
-    warn)  echo -e "  ${YELLOW}!${NC} $message" ;;
-    step)  echo -e "  ${GREEN}→${NC} $message" ;;
-    info)  echo -e "  $message" ;;
-    *)     echo -e "  $message" ;;
+    ok)    log_ok "$message" ;;
+    error) log_error "$message" ;;
+    warn)  log_warn "$message" ;;
+    step)  log_step "$message" ;;
+    info)  log_info "$message" ;;
+    *)     log_info "$message" ;;
 esac
