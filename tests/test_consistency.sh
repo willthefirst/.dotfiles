@@ -6,8 +6,14 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+# shellcheck source=tests/helpers.sh
+source "$SCRIPT_DIR/helpers.sh"
 
-# No setup/teardown needed - these are static analysis tests
+# =============================================================================
+# Setup/teardown - no isolated environment needed for these static tests
+# =============================================================================
+setup() { :; }
+teardown() { :; }
 
 # =============================================================================
 # Test functions
@@ -90,16 +96,4 @@ test_make_targets_exist() {
 # =============================================================================
 # Run all tests
 # =============================================================================
-
-# Simple pass/fail without setup/teardown
-if test_use_log_functions; then
-    echo "PASS: test_use_log_functions"
-else
-    echo "FAIL: test_use_log_functions"
-fi
-
-if test_make_targets_exist; then
-    echo "PASS: test_make_targets_exist"
-else
-    echo "FAIL: test_make_targets_exist"
-fi
+run_all_tests
