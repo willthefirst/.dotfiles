@@ -42,79 +42,10 @@
 # This order allows install.sh to set up prerequisites before deps are installed.
 # =============================================================================
 
-# =============================================================================
-# Package manager abstraction
-# =============================================================================
-
-# Install packages using the system package manager
-# Usage: pkg_install <packages...>
-# Note: On macOS, packages starting with "--cask" are installed as casks
-pkg_install() {
-    local packages=("$@")
-    [[ ${#packages[@]} -eq 0 ]] && return 0
-
-    if is_macos; then
-        local regular_pkgs=()
-        local cask_pkgs=()
-        local is_cask=false
-
-        for pkg in "${packages[@]}"; do
-            if [[ "$pkg" == "--cask" ]]; then
-                is_cask=true
-                continue
-            fi
-            if $is_cask; then
-                cask_pkgs+=("$pkg")
-                is_cask=false
-            else
-                regular_pkgs+=("$pkg")
-            fi
-        done
-
-        [[ ${#regular_pkgs[@]} -gt 0 ]] && brew install "${regular_pkgs[@]}"
-        [[ ${#cask_pkgs[@]} -gt 0 ]] && brew install --cask "${cask_pkgs[@]}"
-        return 0
-    elif is_linux; then
-        sudo apt update
-        sudo apt install -y "${packages[@]}"
-    else
-        log_error "Unsupported platform: $(uname -s)"
-        return 1
-    fi
-}
-
-# Check if a package is installed via the system package manager
-# Usage: pkg_installed <package>
-# Returns 0 if installed, 1 if not
-pkg_installed() {
-    local pkg="$1"
-
-    if is_macos; then
-        brew list "$pkg" &>/dev/null || brew list --cask "$pkg" &>/dev/null
-    elif is_linux; then
-        dpkg -l "$pkg" 2>/dev/null | grep -q "^ii"
-    else
-        return 1
-    fi
-}
-
-# =============================================================================
-# Utility helpers
-# =============================================================================
-
-# Check if a command exists in PATH
-# Usage: has_command <cmd>
-# Returns 0 if exists, 1 if not
-has_command() {
-    command -v "$1" &>/dev/null
-}
-
-# Create directory if it doesn't exist
-# Usage: ensure_dir <path>
-ensure_dir() {
-    local path="$1"
-    [[ -d "$path" ]] || mkdir -p "$path"
-}
+# Source dependencies - these must be sourced before this module
+# Required: lib/common.sh (provides log.sh, platform.sh, fs.sh)
+#           lib/validate.sh (provides has_command)
+#           lib/pkg-manager.sh (provides pkg_install, pkg_installed)
 
 # =============================================================================
 # Dependency file parsing
@@ -153,10 +84,13 @@ get_platform_suffix() {
 # =============================================================================
 
 # Install dependencies for a single package
-# Usage: install_package_deps <package_name>
+# Usage: install_package_deps <package_name> [--dry-run]
 # Returns: 0 on success (or skip), 1 on failure
 install_package_deps() {
     local pkg="$1"
+    local dry_run=false
+    [[ "$2" == "--dry-run" ]] && dry_run=true
+
     local pkg_dir="${DOTFILES_DIR}/${pkg}"
     local platform
     platform=$(get_platform_suffix)
@@ -185,7 +119,7 @@ install_package_deps() {
         source "$pkg_dir/install.sh"
 
         if declare -f "$install_func" >/dev/null; then
-            if $DRY_RUN; then
+            if $dry_run; then
                 log_step "$pkg (custom installer, dry-run)"
             elif "$install_func"; then
                 log_ok "$pkg (custom)"
@@ -205,7 +139,7 @@ install_package_deps() {
         common_deps=$(read_deps_file "$pkg_dir/deps")
         if [[ -n "$common_deps" ]]; then
             while IFS= read -r dep; do
-                install_single_dep "$dep" || had_failure=true
+                install_single_dep "$dep" "$dry_run" || had_failure=true
             done <<< "$common_deps"
         fi
     fi
@@ -217,7 +151,7 @@ install_package_deps() {
         platform_deps=$(read_deps_file "$platform_file")
         if [[ -n "$platform_deps" ]]; then
             while IFS= read -r dep; do
-                install_single_dep "$dep" || had_failure=true
+                install_single_dep "$dep" "$dry_run" || had_failure=true
             done <<< "$platform_deps"
         fi
     fi
@@ -227,10 +161,11 @@ install_package_deps() {
 }
 
 # Install a single dependency
-# Usage: install_single_dep <dep>
+# Usage: install_single_dep <dep> [dry_run]
 # Returns: 0 on success, 1 on failure
 install_single_dep() {
     local dep="$1"
+    local dry_run="${2:-false}"
 
     # Handle --cask prefix for brew
     local check_dep="$dep"
@@ -239,7 +174,7 @@ install_single_dep() {
     fi
 
     # Check dry-run first to avoid slow brew calls in tests
-    if $DRY_RUN; then
+    if [[ "$dry_run" == "true" ]]; then
         log_step "$dep (dry-run)"
         return 0
     fi
@@ -261,10 +196,21 @@ install_single_dep() {
 }
 
 # Install dependencies for multiple packages
-# Usage: install_all_deps <packages...>
+# Usage: install_all_deps [--dry-run] <packages...>
 # Returns: 0 if all succeed, 1 if any fail
 install_all_deps() {
-    local packages=("$@")
+    local dry_run=false
+    local packages=()
+
+    # Parse arguments
+    for arg in "$@"; do
+        if [[ "$arg" == "--dry-run" ]]; then
+            dry_run=true
+        else
+            packages+=("$arg")
+        fi
+    done
+
     local any_failed=false
 
     # Verify package manager is available
@@ -282,8 +228,11 @@ install_all_deps() {
 
     log_section "Installing programs..."
 
+    local dry_run_arg=""
+    $dry_run && dry_run_arg="--dry-run"
+
     for pkg in "${packages[@]}"; do
-        if ! install_package_deps "$pkg"; then
+        if ! install_package_deps "$pkg" $dry_run_arg; then
             any_failed=true
         fi
     done
@@ -293,21 +242,4 @@ install_all_deps() {
         return 1
     fi
     return 0
-}
-
-# =============================================================================
-# Dry-run mode (for testing)
-# =============================================================================
-DRY_RUN=${DRY_RUN:-false}
-
-# Enable dry-run mode
-# Usage: deps_dry_run_enable
-deps_dry_run_enable() {
-    DRY_RUN=true
-}
-
-# Disable dry-run mode
-# Usage: deps_dry_run_disable
-deps_dry_run_disable() {
-    DRY_RUN=false
 }

@@ -7,7 +7,14 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=tests/helpers.sh
 source "$SCRIPT_DIR/helpers.sh"
-init_test_env deps  # deps.sh has get_platform_suffix
+
+# Initialize test environment with required modules
+# deps module requires: common (log, platform, fs), validate, pkg-manager
+init_test_env validate
+# shellcheck source=lib/pkg-manager.sh
+source "$ROOT_DIR/lib/pkg-manager.sh"
+# shellcheck source=lib/deps.sh
+source "$ROOT_DIR/lib/deps.sh"  # deps.sh has get_platform_suffix
 
 # =============================================================================
 # Platform detection tests

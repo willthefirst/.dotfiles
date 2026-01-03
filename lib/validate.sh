@@ -11,6 +11,13 @@
 # Usage: source this file after sourcing lib/log.sh
 # =============================================================================
 
+# Check if a command exists in PATH
+# Usage: has_command <cmd>
+# Returns 0 if exists, 1 if not
+has_command() {
+    command -v "$1" &>/dev/null
+}
+
 # Run a validation check and report result
 # Usage: check "description" command [args...]
 # Returns: 0 on success, 1 on failure (also increments errors global)
