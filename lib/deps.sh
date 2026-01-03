@@ -5,6 +5,36 @@
 # =============================================================================
 # Installs actual programs (not just their configs) using system package managers.
 # Supports per-package dependency specification via deps files and custom install scripts.
+#
+# PACKAGE DEPENDENCY INTERFACE
+# ============================
+# Each package directory can define dependencies in three ways:
+#
+# 1. deps file - Common dependencies (all platforms)
+#    Location: <package>/deps
+#    Format: One package name per line, # comments allowed
+#    Example:
+#      ripgrep
+#      fd  # file finder
+#
+# 2. Platform-specific deps files
+#    Location: <package>/deps.darwin (macOS) or <package>/deps.linux
+#    Format: Same as deps file
+#    For Homebrew casks: prefix with "--cask " (e.g., "--cask font-fira-code")
+#
+# 3. Custom install script
+#    Location: <package>/install.sh
+#    Must define: install_<package>() function
+#    Example for "git" package - define install_git() in git/install.sh
+#    The function should return 0 on success, non-zero on failure.
+#
+# EXECUTION ORDER
+# ===============
+# 1. Custom install.sh (if exists)
+# 2. Common deps file
+# 3. Platform-specific deps file
+#
+# This order allows install.sh to set up prerequisites before deps are installed.
 # =============================================================================
 
 # =============================================================================
