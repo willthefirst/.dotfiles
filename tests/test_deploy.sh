@@ -173,6 +173,36 @@ test_verify_installation_counts_multiple_configs() {
     assert_contains "$output" "Verified (2 configs)"
 }
 
+test_deploy_packages_returns_failure_on_conflict() {
+    # Create package directory
+    mkdir -p "$TEST_DOTFILES/zsh"
+    echo "# from dotfiles" > "$TEST_DOTFILES/zsh/.zshrc"
+
+    # Create conflicting file at target location
+    echo "# existing file" > "$TEST_HOME/.zshrc"
+
+    # deploy_packages should fail because of the conflict
+    local result=0
+    deploy_packages "$TEST_DOTFILES" "false" "zsh" > /dev/null 2>&1 || result=$?
+
+    assert "Expected deploy_packages to fail with conflict" test "$result" -ne 0
+}
+
+test_deploy_packages_outputs_error_on_failure() {
+    # Create package directory
+    mkdir -p "$TEST_DOTFILES/zsh"
+    echo "# from dotfiles" > "$TEST_DOTFILES/zsh/.zshrc"
+
+    # Create conflicting file at target location
+    echo "# existing file" > "$TEST_HOME/.zshrc"
+
+    # Should show error output
+    local output
+    output=$(deploy_packages "$TEST_DOTFILES" "false" "zsh" 2>&1)
+
+    assert_contains "$output" "zsh"
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -191,3 +221,5 @@ run_test test_verify_installation_reports_all_good
 run_test test_verify_installation_warns_on_unmanaged_file
 run_test test_verify_installation_warns_on_missing_file
 run_test test_verify_installation_counts_multiple_configs
+run_test test_deploy_packages_returns_failure_on_conflict
+run_test test_deploy_packages_outputs_error_on_failure
