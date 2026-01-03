@@ -73,6 +73,20 @@ test_detects_directory_symlink_conflict() {
     assert_contains "$conflicts" "symlink:$TEST_HOME/.config/nvim"
 }
 
+test_check_all_conflicts_with_empty_packages() {
+    # Empty package list should not error
+    local result=0
+    check_all_conflicts "$TEST_DOTFILES" > /dev/null 2>&1 || result=$?
+    assert "Expected check_all_conflicts to succeed with empty packages" test "$result" -eq 0
+}
+
+test_get_package_conflicts_with_nonexistent_dir() {
+    # Should handle nonexistent package directory gracefully
+    local conflicts
+    conflicts=$(get_package_conflicts "$TEST_DOTFILES/nonexistent" "$TEST_HOME")
+    assert "Expected no conflicts for nonexistent package, got: $conflicts" test -z "$conflicts"
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -81,3 +95,5 @@ run_test test_detects_symlink_conflict
 run_test test_no_conflict_when_correctly_linked
 run_test test_no_conflict_when_nothing_exists
 run_test test_detects_directory_symlink_conflict
+run_test test_check_all_conflicts_with_empty_packages
+run_test test_get_package_conflicts_with_nonexistent_dir

@@ -203,6 +203,13 @@ test_deploy_packages_outputs_error_on_failure() {
     assert_contains "$output" "zsh"
 }
 
+test_deploy_packages_handles_empty_package_list() {
+    # Empty package list should succeed (nothing to deploy)
+    local result=0
+    deploy_packages "$TEST_DOTFILES" "false" > /dev/null 2>&1 || result=$?
+    assert "Expected deploy_packages to succeed with empty package list" test "$result" -eq 0
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -223,3 +230,4 @@ run_test test_verify_installation_warns_on_missing_file
 run_test test_verify_installation_counts_multiple_configs
 run_test test_deploy_packages_returns_failure_on_conflict
 run_test test_deploy_packages_outputs_error_on_failure
+run_test test_deploy_packages_handles_empty_package_list
