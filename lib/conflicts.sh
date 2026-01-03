@@ -3,6 +3,11 @@
 # =============================================================================
 # Conflict detection and resolution for stow packages
 # =============================================================================
+# Error handling conventions:
+#   - Check functions (is_*, has_*) return 0/1, no logging
+#   - User-facing functions log errors before returning non-zero
+#   - Data-returning functions output to stdout, errors to stderr
+# =============================================================================
 
 # =============================================================================
 # Conflict string format: "type:path[:target]"

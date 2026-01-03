@@ -3,6 +3,11 @@
 # =============================================================================
 # Dependency installation module for dotfiles
 # =============================================================================
+# Error handling conventions:
+#   - Check functions (is_*, has_*) return 0/1, no logging
+#   - User-facing functions log errors before returning non-zero
+#   - Data-returning functions output to stdout, errors to stderr
+# =============================================================================
 # Installs actual programs (not just their configs) using system package managers.
 # Supports per-package dependency specification via deps files and custom install scripts.
 #

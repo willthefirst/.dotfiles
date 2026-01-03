@@ -3,6 +3,11 @@
 # =============================================================================
 # Stow deployment logic
 # =============================================================================
+# Error handling conventions:
+#   - Check functions (is_*, has_*) return 0/1, no logging
+#   - User-facing functions log errors before returning non-zero
+#   - Data-returning functions output to stdout, errors to stderr
+# =============================================================================
 
 # Filter out LINK: lines from stow output (verbose info we don't need)
 filter_stow_output() {
@@ -10,11 +15,19 @@ filter_stow_output() {
 }
 
 # Create required directories with proper permissions
+# Returns: 0 on success, 1 on failure
 create_directories() {
-    mkdir -p "$HOME/.config"
-    mkdir -p "$HOME/.ssh/sockets"
-    chmod 700 "$HOME/.ssh"
-    chmod 700 "$HOME/.ssh/sockets"
+    if ! mkdir -p "$HOME/.config"; then
+        log_error "Failed to create ~/.config"
+        return 1
+    fi
+    if ! mkdir -p "$HOME/.ssh/sockets"; then
+        log_error "Failed to create ~/.ssh/sockets"
+        return 1
+    fi
+    chmod 700 "$HOME/.ssh" 2>/dev/null || true
+    chmod 700 "$HOME/.ssh/sockets" 2>/dev/null || true
+    return 0
 }
 
 # Check prerequisites (GNU Stow)
