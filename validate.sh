@@ -15,67 +15,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 # shellcheck source=lib/config.sh
 source "$SCRIPT_DIR/lib/config.sh"
+# shellcheck source=lib/validate.sh
+source "$SCRIPT_DIR/lib/validate.sh"
 
 errors=0
-
-# =============================================================================
-# Validation helpers - reduce repetition in validators
-# =============================================================================
-
-# Run a validation check and report result
-# Usage: check "description" command [args...]
-# Returns: 0 on success, 1 on failure (also increments errors)
-check() {
-    local desc="$1"
-    shift
-    if "$@" > /dev/null 2>&1; then
-        log_ok "$desc"
-        return 0
-    else
-        log_error "$desc"
-        ((errors++)) || true
-        return 1
-    fi
-}
-
-# Run a validation check, treating failure as warning (non-fatal)
-# Usage: check_warn "description" command [args...]
-check_warn() {
-    local desc="$1"
-    shift
-    if "$@" > /dev/null 2>&1; then
-        log_ok "$desc"
-    else
-        log_warn "$desc (non-fatal)"
-    fi
-}
-
-# Check if a file exists
-# Usage: check_file "path" "success_msg" ["missing_msg"]
-check_file() {
-    local path="$1"
-    local success_msg="$2"
-    local missing_msg="${3:-$path not found}"
-    if [[ -f "$path" ]]; then
-        log_ok "$success_msg"
-        return 0
-    else
-        log_warn "$missing_msg"
-        return 1
-    fi
-}
-
-# Skip validation if command not available
-# Usage: require_cmd "command" "skip message" || return
-require_cmd() {
-    local cmd="$1"
-    local skip_msg="$2"
-    if ! command -v "$cmd" &> /dev/null; then
-        log_info "$skip_msg"
-        return 1
-    fi
-    return 0
-}
 
 # =============================================================================
 # Package validators
