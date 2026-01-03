@@ -121,7 +121,7 @@ validate_ssh() {
 
 validate_nvim() {
     log_step "Validating nvim config..."
-    require_cmd nvim "nvim not installed, skipping" || return
+    require_cmd nvim "nvim not installed, skipping" || return 0
     check_warn "nvim config loads" \
         nvim --headless -c "lua print('ok')" -c "qa"
 }
