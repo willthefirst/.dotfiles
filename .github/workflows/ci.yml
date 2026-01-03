@@ -63,7 +63,7 @@ jobs:
       - name: Install stow
         run: sudo apt-get install -y stow
 
-      - name: Test install script (dry run)
+      - name: Test configure (dry run)
         run: |
           # Create isolated test environment
           export HOME=$(mktemp -d)
@@ -71,7 +71,7 @@ jobs:
           mkdir -p "$HOME/.config" "$HOME/.ssh/sockets"
           chmod 700 "$HOME/.ssh"
 
-          # Run install
+          # Configure dotfiles
           make configure
 
           # Verify symlinks were created
