@@ -21,7 +21,7 @@ help:
 	@echo "  make uninstall        - Remove all symlinks"
 	@echo ""
 	@echo "Options:"
-	@echo "  PACKAGES=\"nvim git\"   - Specify packages (for install, setup)"
+	@echo "  PACKAGES=\"nvim git\"   - Specify packages (for install, setup, uninstall)"
 
 setup:
 	./install.sh --with-deps $(PACKAGES)
@@ -62,5 +62,5 @@ clean:
 	@$(LOG) ok "Cleanup complete"
 
 uninstall:
-	@cd $(HOME)/.dotfiles && stow -D -t ~ zsh git nvim ssh ghostty 2>&1 | grep -v "BUG in find_stowed_path" || true
+	@cd $(HOME)/.dotfiles && stow -D -t ~ $(PACKAGES) 2>&1 | grep -v "BUG in find_stowed_path" || true
 	@$(LOG) ok "Symlinks removed"
