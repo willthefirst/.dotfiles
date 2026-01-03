@@ -55,11 +55,8 @@ init_test_env() {
 # =============================================================================
 
 # Setup test environment with isolated HOME and DOTFILES_DIR
-# Usage: setup_test_env [create_dotfiles_structure]
-# If create_dotfiles_structure is "true", creates a mock .dotfiles structure
+# Creates fully isolated test directories for all configurable paths
 setup_test_env() {
-    local create_structure="${1:-false}"
-
     # Initialize mock system
     mock_init
 
