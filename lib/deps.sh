@@ -159,7 +159,8 @@ install_package_deps() {
                 had_failure=true
             fi
         else
-            log_warn "$pkg: install.sh missing $install_func()"
+            log_error "$pkg: install.sh exists but missing $install_func() function"
+            had_failure=true
         fi
     fi
 
