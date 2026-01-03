@@ -69,15 +69,12 @@ test_validate_config_entry_rejects_empty_verify() {
 }
 
 # =============================================================================
+# Setup/teardown - no isolated environment needed for these static tests
+# =============================================================================
+setup() { :; }
+teardown() { :; }
+
+# =============================================================================
 # Run all tests
 # =============================================================================
-
-# Simple tests - no setup/teardown needed
-for test_func in $(declare -F | awk '{print $3}' | grep '^test_'); do
-    if output=$("$test_func" 2>&1); then
-        echo "PASS: $test_func"
-    else
-        echo "FAIL: $test_func"
-        [[ -n "$output" ]] && echo "$output"
-    fi
-done
+run_all_tests
