@@ -102,6 +102,51 @@ test_read_deps_file_handles_inline_comments() {
     assert "Expected 'package1', got: $output" test "$output" == "package1"
 }
 
+test_read_deps_file_handles_tabs() {
+    # Use printf to ensure tabs are preserved
+    printf '\tpackage1\t\n' > "$TEST_DOTFILES/deps"
+    printf 'package2\t# comment\n' >> "$TEST_DOTFILES/deps"
+    local output
+    output=$(read_deps_file "$TEST_DOTFILES/deps")
+    assert_contains "$output" "package1"
+    assert_contains "$output" "package2"
+    # Verify no tabs remain in output
+    if echo "$output" | grep -q $'\t'; then
+        echo "  Tabs were not trimmed from output"
+        return 1
+    fi
+    return 0
+}
+
+test_read_deps_file_handles_crlf_line_endings() {
+    # Create file with Windows-style CRLF line endings
+    printf 'package1\r\npackage2\r\n' > "$TEST_DOTFILES/deps"
+    local output
+    output=$(read_deps_file "$TEST_DOTFILES/deps")
+    # Should have 2 packages without carriage returns
+    local line_count
+    line_count=$(echo "$output" | grep -c .)
+    assert "Expected 2 packages with CRLF input, got $line_count" test "$line_count" -eq 2
+    # Verify no carriage returns remain
+    if echo "$output" | grep -q $'\r'; then
+        echo "  Carriage returns were not stripped"
+        return 1
+    fi
+    return 0
+}
+
+test_read_deps_file_handles_mixed_whitespace() {
+    # Mix of tabs, spaces, and content
+    printf '  \t  package1  \t  \n' > "$TEST_DOTFILES/deps"
+    printf '\t\tpackage2   # comment with trailing spaces   \n' >> "$TEST_DOTFILES/deps"
+    local output
+    output=$(read_deps_file "$TEST_DOTFILES/deps")
+    # First line should be exactly "package1"
+    local first_line
+    first_line=$(echo "$output" | head -1)
+    assert "Expected 'package1', got: '$first_line'" test "$first_line" == "package1"
+}
+
 # =============================================================================
 # Install order tests
 # =============================================================================
@@ -229,6 +274,9 @@ run_test test_read_deps_file_reads_packages
 run_test test_read_deps_file_skips_comments
 run_test test_read_deps_file_skips_empty_lines
 run_test test_read_deps_file_handles_inline_comments
+run_test test_read_deps_file_handles_tabs
+run_test test_read_deps_file_handles_crlf_line_endings
+run_test test_read_deps_file_handles_mixed_whitespace
 run_test test_install_package_deps_skips_missing_package
 run_test test_install_package_deps_skips_package_without_deps
 run_test test_install_package_deps_reads_common_deps
