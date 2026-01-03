@@ -72,7 +72,7 @@ jobs:
           chmod 700 "$HOME/.ssh"
 
           # Run install
-          make install
+          make configure
 
           # Verify symlinks were created
           test -L "$HOME/.zshrc" || exit 1
