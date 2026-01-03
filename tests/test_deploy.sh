@@ -122,6 +122,57 @@ test_no_broken_symlinks_in_app_support() {
     assert "Expected to detect broken symlinks" test "$broken_links" -gt 0
 }
 
+test_verify_installation_reports_all_good() {
+    # Create a managed symlink
+    mkdir -p "$TEST_DOTFILES/zsh"
+    touch "$TEST_DOTFILES/zsh/.zshrc"
+    ln -s "$TEST_DOTFILES/zsh/.zshrc" "$TEST_HOME/.zshrc"
+
+    # Override VERIFY_SYMLINKS for this test
+    VERIFY_SYMLINKS=("$TEST_HOME/.zshrc")
+
+    local output
+    output=$(verify_installation 2>&1)
+    assert_contains "$output" "Verified (1 configs)"
+}
+
+test_verify_installation_warns_on_unmanaged_file() {
+    # Create a regular file (not managed by stow)
+    echo "not managed" > "$TEST_HOME/.zshrc"
+
+    # Override VERIFY_SYMLINKS for this test
+    VERIFY_SYMLINKS=("$TEST_HOME/.zshrc")
+
+    local output
+    output=$(verify_installation 2>&1)
+    assert_contains "$output" "exists but not managed by stow"
+}
+
+test_verify_installation_warns_on_missing_file() {
+    # Don't create the file - it should be missing
+    VERIFY_SYMLINKS=("$TEST_HOME/.nonexistent")
+
+    local output
+    output=$(verify_installation 2>&1)
+    assert_contains "$output" "not found"
+}
+
+test_verify_installation_counts_multiple_configs() {
+    # Create multiple managed symlinks
+    mkdir -p "$TEST_DOTFILES/zsh"
+    mkdir -p "$TEST_DOTFILES/git"
+    touch "$TEST_DOTFILES/zsh/.zshrc"
+    touch "$TEST_DOTFILES/git/.gitconfig"
+    ln -s "$TEST_DOTFILES/zsh/.zshrc" "$TEST_HOME/.zshrc"
+    ln -s "$TEST_DOTFILES/git/.gitconfig" "$TEST_HOME/.gitconfig"
+
+    VERIFY_SYMLINKS=("$TEST_HOME/.zshrc" "$TEST_HOME/.gitconfig")
+
+    local output
+    output=$(verify_installation 2>&1)
+    assert_contains "$output" "Verified (2 configs)"
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -136,3 +187,7 @@ run_test test_deploy_packages_warns_on_missing_package
 run_test test_deploy_packages_detects_file_instead_of_directory
 run_test test_config_has_content
 run_test test_no_broken_symlinks_in_app_support
+run_test test_verify_installation_reports_all_good
+run_test test_verify_installation_warns_on_unmanaged_file
+run_test test_verify_installation_warns_on_missing_file
+run_test test_verify_installation_counts_multiple_configs
