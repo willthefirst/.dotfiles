@@ -36,7 +36,7 @@ is_dotfiles_managed() {
     dotfiles_resolved=$(resolve_link "$DOTFILES_DIR")
 
     # Check if the path itself or any parent is a symlink into dotfiles
-    while [[ "$check_path" != "$HOME" && "$check_path" != "/" ]]; do
+    while [[ "$check_path" != "$DOTFILES_HOME" && "$check_path" != "/" ]]; do
         if [[ -L "$check_path" ]]; then
             local target
             target=$(resolve_link "$check_path")
@@ -47,6 +47,21 @@ is_dotfiles_managed() {
         check_path=$(dirname "$check_path")
     done
     return 1
+}
+
+# Install file to bin directory, using sudo only if needed
+# Usage: install_to_bin "/path/to/source" "name"
+# Automatically skips sudo when DOTFILES_BIN_DIR is writable (e.g., in tests)
+install_to_bin() {
+    local source="$1"
+    local name="$2"
+    local dest="$DOTFILES_BIN_DIR/$name"
+
+    if [[ -w "$DOTFILES_BIN_DIR" ]]; then
+        mv "$source" "$dest"
+    else
+        sudo mv "$source" "$dest"
+    fi
 }
 
 # Resolve symlink and check if it points to expected target

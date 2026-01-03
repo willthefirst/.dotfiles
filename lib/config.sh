@@ -10,8 +10,38 @@ SCRIPT_DIR_CONFIG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/log.sh
 source "$SCRIPT_DIR_CONFIG/log.sh"
 
+# =============================================================================
+# Configurable Paths
+# =============================================================================
+# These paths can be overridden by setting environment variables before
+# sourcing this file. This is useful for:
+#   - Testing (redirect to isolated temp directories)
+#   - Custom installations (different target paths)
+#   - Containerized environments
+#
+# Example (for testing):
+#   export DOTFILES_HOME=/tmp/test-home
+#   source lib/config.sh
+# =============================================================================
+
+# Base directories
+: "${DOTFILES_HOME:=$HOME}"
+: "${DOTFILES_CONFIG_DIR:=$DOTFILES_HOME/.config}"
+: "${DOTFILES_SSH_DIR:=$DOTFILES_HOME/.ssh}"
+
+# Install directories
+: "${DOTFILES_BIN_DIR:=/usr/local/bin}"
+: "${DOTFILES_TEMP_DIR:=/tmp}"
+
+# Backup settings
+: "${DOTFILES_BACKUP_DIR:=$DOTFILES_HOME}"
+
+# Export for subshells
+export DOTFILES_HOME DOTFILES_CONFIG_DIR DOTFILES_SSH_DIR
+export DOTFILES_BIN_DIR DOTFILES_TEMP_DIR DOTFILES_BACKUP_DIR
+
 # Directory paths
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+DOTFILES_DIR="${DOTFILES_DIR:-$DOTFILES_HOME/.dotfiles}"
 
 # Backup configuration
 # shellcheck disable=SC2034
@@ -25,13 +55,13 @@ BACKUP_RETENTION_DAYS=7
 # Format: "package:backup_path:verify_path"
 # =============================================================================
 PACKAGE_CONFIG=(
-    "zsh:$HOME/.zshrc:$HOME/.zshrc"
-    "git:$HOME/.gitconfig:$HOME/.gitconfig"
-    "git:$HOME/.gitconfig.personal:$HOME/.gitconfig.personal"
-    "git:$HOME/.gitignore_global:$HOME/.gitignore_global"
-    "nvim:$HOME/.config/nvim:$HOME/.config/nvim/init.lua"
-    "ssh:$HOME/.ssh/config:$HOME/.ssh/config"
-    "ghostty:$HOME/.config/ghostty:$HOME/.config/ghostty/config"
+    "zsh:$DOTFILES_HOME/.zshrc:$DOTFILES_HOME/.zshrc"
+    "git:$DOTFILES_HOME/.gitconfig:$DOTFILES_HOME/.gitconfig"
+    "git:$DOTFILES_HOME/.gitconfig.personal:$DOTFILES_HOME/.gitconfig.personal"
+    "git:$DOTFILES_HOME/.gitignore_global:$DOTFILES_HOME/.gitignore_global"
+    "nvim:$DOTFILES_CONFIG_DIR/nvim:$DOTFILES_CONFIG_DIR/nvim/init.lua"
+    "ssh:$DOTFILES_SSH_DIR/config:$DOTFILES_SSH_DIR/config"
+    "ghostty:$DOTFILES_CONFIG_DIR/ghostty:$DOTFILES_CONFIG_DIR/ghostty/config"
 )
 
 # Derived arrays (populated by init_config)

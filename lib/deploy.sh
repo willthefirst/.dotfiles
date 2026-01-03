@@ -24,16 +24,16 @@ filter_stow_output() {
 # Create required directories with proper permissions
 # Returns: 0 on success, 1 on failure
 create_directories() {
-    if ! mkdir -p "$HOME/.config"; then
-        log_error "Failed to create ~/.config"
+    if ! mkdir -p "$DOTFILES_CONFIG_DIR"; then
+        log_error "Failed to create $DOTFILES_CONFIG_DIR"
         return 1
     fi
-    if ! mkdir -p "$HOME/.ssh/sockets"; then
-        log_error "Failed to create ~/.ssh/sockets"
+    if ! mkdir -p "$DOTFILES_SSH_DIR/sockets"; then
+        log_error "Failed to create $DOTFILES_SSH_DIR/sockets"
         return 1
     fi
-    chmod "$SSH_DIR_PERMISSIONS" "$HOME/.ssh" 2>/dev/null || true
-    chmod "$SSH_DIR_PERMISSIONS" "$HOME/.ssh/sockets" 2>/dev/null || true
+    chmod "$SSH_DIR_PERMISSIONS" "$DOTFILES_SSH_DIR" 2>/dev/null || true
+    chmod "$SSH_DIR_PERMISSIONS" "$DOTFILES_SSH_DIR/sockets" 2>/dev/null || true
     return 0
 }
 
@@ -62,7 +62,7 @@ deploy_packages() {
     local adopt_mode="$2"
     shift 2
     local packages=("$@")
-    local stow_opts=(-v -t "$HOME" --no-folding --ignore='deps.*' --ignore='install\.sh')
+    local stow_opts=(-v -t "$DOTFILES_HOME" --no-folding --ignore='deps.*' --ignore='install\.sh')
     local stowed_pkgs=()
     local missing_pkgs=()
 

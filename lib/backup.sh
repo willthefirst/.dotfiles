@@ -34,7 +34,7 @@ create_backup() {
 
     local files=("$@")
     local backup_dir
-    backup_dir="$HOME/${BACKUP_PREFIX}$(date +%Y%m%d-%H%M%S)"
+    backup_dir="$DOTFILES_BACKUP_DIR/${BACKUP_PREFIX}$(date +%Y%m%d-%H%M%S)"
 
     if ! needs_backup "${files[@]}"; then
         return 0
