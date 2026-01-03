@@ -37,15 +37,17 @@ create_directories() {
     return 0
 }
 
-# Check prerequisites (GNU Stow)
+# Check prerequisites (GNU Stow) - auto-install if missing
 check_prerequisites() {
-    local install_hint=""
-    install_hint+="Install it with:"$'\n'
-    install_hint+="  macOS:  brew install stow"$'\n'
-    install_hint+="  Ubuntu: sudo apt install stow"$'\n'
-    install_hint+="  Arch:   sudo pacman -S stow"
+    if command -v stow &>/dev/null; then
+        return 0
+    fi
 
-    if ! require_command "stow" "$install_hint"; then
+    log_step "Installing stow..."
+    if pkg_install stow; then
+        log_ok "stow"
+    else
+        log_error "Failed to install stow"
         exit 1
     fi
 }
