@@ -3,13 +3,11 @@
 # =============================================================================
 # Custom lazygit installation
 # =============================================================================
-# Uses brew on macOS, GitHub releases on Linux for latest version
+# macOS uses deps.darwin (brew), Linux uses GitHub releases
 # =============================================================================
 
 install_git() {
-    if is_macos; then
-        pkg_installed lazygit || pkg_install lazygit >/dev/null 2>&1
-    elif is_linux; then
+    if is_linux; then
         # Install latest lazygit from GitHub releases
         local arch
         arch=$(uname -m)

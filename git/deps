@@ -1,1 +1,2 @@
-# lazygit is installed via install.sh
+# Common dependencies (none currently)
+# lazygit: macOS via deps.darwin, Linux via install.sh
