@@ -17,7 +17,8 @@
       "Bash(wc:*)",
       "Bash(grep:*)",
       "Bash(find:*)",
-      "Bash(make test:*)"
+      "Bash(make test:*)",
+      "Bash(make validate:*)"
     ]
   }
 }

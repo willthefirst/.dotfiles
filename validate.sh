@@ -3,6 +3,9 @@
 # =============================================================================
 # Validate configuration files before deployment
 # =============================================================================
+# Validators are auto-discovered based on packages in PACKAGE_CONFIG.
+# To add validation for a new package, define a validate_<pkg>() function.
+# =============================================================================
 
 set -e
 
@@ -10,6 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=lib/common.sh
 source "$SCRIPT_DIR/lib/common.sh"
+# shellcheck source=lib/config.sh
+source "$SCRIPT_DIR/lib/config.sh"
 
 errors=0
 
@@ -88,11 +93,13 @@ main() {
     echo "Validating configuration files..."
     echo ""
 
-    validate_zsh
-    validate_git
-    validate_ssh
-    validate_nvim
-    validate_ghostty
+    # Auto-discover and run validators for packages in PACKAGE_CONFIG
+    for pkg in "${PACKAGES[@]}"; do
+        local validator="validate_${pkg}"
+        if declare -f "$validator" >/dev/null; then
+            "$validator"
+        fi
+    done
 
     echo ""
     if [[ $errors -eq 0 ]]; then
