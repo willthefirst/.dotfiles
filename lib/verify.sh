@@ -28,7 +28,7 @@ verify_installation() {
     else
         log_warn "Complete with warnings:"
         for issue in "${issues[@]}"; do
-            echo "      $issue"
+            log_info "    $issue"
         done
     fi
 }

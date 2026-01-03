@@ -45,20 +45,21 @@ SHELL_FILES := install.sh lib/*.sh tests/*.sh validate.sh */install.sh
 
 check-shellcheck-version:
 	@shellcheck --version | grep -q 'version: $(SHELLCHECK_VERSION)' \
-		|| { echo "Error: expected shellcheck $(SHELLCHECK_VERSION), run: brew upgrade shellcheck"; exit 1; }
+		|| { echo -e "  \033[0;31m✗\033[0m Expected shellcheck $(SHELLCHECK_VERSION), run: brew upgrade shellcheck"; exit 1; }
 
 lint: check-shellcheck-version
 	shellcheck $(SHELL_FILES)
 	@for f in $(SHELL_FILES); do bash -n "$$f" || exit 1; done
-	@echo "All files pass ShellCheck and syntax check"
+	@echo -e "  \033[0;32m✓\033[0m All files pass ShellCheck and syntax check"
 
 validate:
 	./validate.sh
 
 clean:
-	@echo "Removing backups older than 7 days..."
+	@echo -e "  \033[0;32m→\033[0m Removing backups older than 7 days..."
 	@. ./lib/config.sh && find ~ -maxdepth 1 -name "$${BACKUP_PREFIX}*" -mtime +$${BACKUP_RETENTION_DAYS} -exec rm -rf {} \;
+	@echo -e "  \033[0;32m✓\033[0m Cleanup complete"
 
 uninstall:
-	cd $(HOME)/.dotfiles && stow -D -t ~ zsh git nvim ssh ghostty 2>&1 | grep -v "BUG in find_stowed_path" || true
-	@echo "Symlinks removed"
+	@cd $(HOME)/.dotfiles && stow -D -t ~ zsh git nvim ssh ghostty 2>&1 | grep -v "BUG in find_stowed_path" || true
+	@echo -e "  \033[0;32m✓\033[0m Symlinks removed"

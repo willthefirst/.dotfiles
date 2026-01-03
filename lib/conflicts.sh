@@ -199,39 +199,39 @@ check_all_conflicts() {
 
             if [[ "$pkg" != "$current_pkg" ]]; then
                 [[ -n "$current_pkg" ]] && echo ""
-                echo -e "  ${YELLOW}[$pkg]${NC}"
+                log_warn "[$pkg]"
                 current_pkg="$pkg"
             fi
 
             if [[ "$type" == "symlink" ]]; then
                 local target="${path#*:}"
                 path="${path%%:*}"
-                echo -e "    ${RED}*${NC} $path"
-                echo -e "      -> symlink to $target (not managed by stow)"
+                log_error "  $path"
+                log_info "    -> symlink to $target (not managed by stow)"
             else
-                echo -e "    ${RED}*${NC} $path"
-                echo -e "      -> regular file/directory (would be overwritten)"
+                log_error "  $path"
+                log_info "    -> regular file/directory (would be overwritten)"
             fi
         done
 
         echo ""
-        echo "-------------------------------------------------------------------"
-        echo -e "${YELLOW}How to resolve:${NC}"
+        log_info "-------------------------------------------------------------------"
+        log_warn "How to resolve:"
         echo ""
-        echo "  Option 1: Remove conflicting symlinks/files automatically"
-        echo -e "    ${GREEN}make configure-force${NC}"
+        log_info "Option 1: Remove conflicting symlinks/files automatically"
+        log_step "make configure-force"
         echo ""
-        echo "  Option 2: Adopt existing files into stow (keeps current content)"
-        echo -e "    ${GREEN}make configure-adopt${NC}"
+        log_info "Option 2: Adopt existing files into stow (keeps current content)"
+        log_step "make configure-adopt"
         echo ""
-        echo "  Option 3: Remove manually, then re-run:"
+        log_info "Option 3: Remove manually, then re-run:"
         for conflict in "${all_conflicts[@]}"; do
             local path
             path=$(parse_conflict_path "$conflict")
-            echo "    rm \"$path\""
+            log_info "  rm \"$path\""
         done
-        echo "    make configure"
-        echo "-------------------------------------------------------------------"
+        log_info "  make configure"
+        log_info "-------------------------------------------------------------------"
         echo ""
 
         return 1
@@ -247,13 +247,13 @@ remove_conflict() {
     local short_path="${path#"$HOME/"}"
 
     if [[ -L "$path" ]]; then
-        echo "  Removing conflict: ~/$short_path"
+        log_step "Removing conflict: ~/$short_path"
         rm "$path"
     elif [[ -d "$path" ]]; then
-        echo "  Removing conflict: ~/$short_path"
+        log_step "Removing conflict: ~/$short_path"
         rm -rf "$path"
     elif [[ -f "$path" ]]; then
-        echo "  Removing conflict: ~/$short_path"
+        log_step "Removing conflict: ~/$short_path"
         rm "$path"
     fi
 }
