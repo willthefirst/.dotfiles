@@ -13,10 +13,17 @@ FRAMEWORK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$FRAMEWORK_DIR")"
 
 # Global test state
+TEST_ROOT=""
 TEST_HOME=""
 TEST_DOTFILES=""
 ORIGINAL_HOME=""
 ORIGINAL_DOTFILES_DIR=""
+ORIGINAL_DOTFILES_HOME=""
+ORIGINAL_DOTFILES_CONFIG_DIR=""
+ORIGINAL_DOTFILES_SSH_DIR=""
+ORIGINAL_DOTFILES_BIN_DIR=""
+ORIGINAL_DOTFILES_TEMP_DIR=""
+ORIGINAL_DOTFILES_BACKUP_DIR=""
 
 # =============================================================================
 # Test initialization
@@ -56,22 +63,38 @@ setup_test_env() {
     # Initialize mock system
     mock_init
 
-    TEST_HOME=$(mktemp -d)
-    TEST_DOTFILES=$(mktemp -d)
+    # Create isolated test root
+    TEST_ROOT=$(mktemp -d)
+    TEST_HOME="$TEST_ROOT/home"
+    TEST_DOTFILES="$TEST_ROOT/dotfiles"
+
+    # Save original values
     ORIGINAL_HOME="$HOME"
     ORIGINAL_DOTFILES_DIR="$DOTFILES_DIR"
+    ORIGINAL_DOTFILES_HOME="${DOTFILES_HOME:-}"
+    ORIGINAL_DOTFILES_CONFIG_DIR="${DOTFILES_CONFIG_DIR:-}"
+    ORIGINAL_DOTFILES_SSH_DIR="${DOTFILES_SSH_DIR:-}"
+    ORIGINAL_DOTFILES_BIN_DIR="${DOTFILES_BIN_DIR:-}"
+    ORIGINAL_DOTFILES_TEMP_DIR="${DOTFILES_TEMP_DIR:-}"
+    ORIGINAL_DOTFILES_BACKUP_DIR="${DOTFILES_BACKUP_DIR:-}"
 
-    # Override for testing
+    # Override all paths for testing
     HOME="$TEST_HOME"
     DOTFILES_DIR="$TEST_DOTFILES"
+    export DOTFILES_HOME="$TEST_HOME"
+    export DOTFILES_CONFIG_DIR="$TEST_HOME/.config"
+    export DOTFILES_SSH_DIR="$TEST_HOME/.ssh"
+    export DOTFILES_BIN_DIR="$TEST_ROOT/bin"
+    export DOTFILES_TEMP_DIR="$TEST_ROOT/tmp"
+    export DOTFILES_BACKUP_DIR="$TEST_HOME"
 
-    # Create common directories
-    mkdir -p "$TEST_HOME/.config"
-    mkdir -p "$TEST_HOME/.ssh"
-
-    if [[ "$create_structure" == "true" ]]; then
-        mkdir -p "$DOTFILES_DIR"
-    fi
+    # Create all test directories
+    mkdir -p "$TEST_HOME"
+    mkdir -p "$TEST_DOTFILES"
+    mkdir -p "$DOTFILES_CONFIG_DIR"
+    mkdir -p "$DOTFILES_SSH_DIR"
+    mkdir -p "$DOTFILES_BIN_DIR"
+    mkdir -p "$DOTFILES_TEMP_DIR"
 }
 
 # Teardown test environment and restore original values
@@ -79,9 +102,44 @@ teardown_test_env() {
     # Cleanup mock system
     mock_cleanup
 
+    # Restore original values
     HOME="$ORIGINAL_HOME"
     DOTFILES_DIR="$ORIGINAL_DOTFILES_DIR"
-    rm -rf "$TEST_HOME" "$TEST_DOTFILES"
+
+    # Restore or unset path overrides
+    if [[ -n "$ORIGINAL_DOTFILES_HOME" ]]; then
+        export DOTFILES_HOME="$ORIGINAL_DOTFILES_HOME"
+    else
+        unset DOTFILES_HOME
+    fi
+    if [[ -n "$ORIGINAL_DOTFILES_CONFIG_DIR" ]]; then
+        export DOTFILES_CONFIG_DIR="$ORIGINAL_DOTFILES_CONFIG_DIR"
+    else
+        unset DOTFILES_CONFIG_DIR
+    fi
+    if [[ -n "$ORIGINAL_DOTFILES_SSH_DIR" ]]; then
+        export DOTFILES_SSH_DIR="$ORIGINAL_DOTFILES_SSH_DIR"
+    else
+        unset DOTFILES_SSH_DIR
+    fi
+    if [[ -n "$ORIGINAL_DOTFILES_BIN_DIR" ]]; then
+        export DOTFILES_BIN_DIR="$ORIGINAL_DOTFILES_BIN_DIR"
+    else
+        unset DOTFILES_BIN_DIR
+    fi
+    if [[ -n "$ORIGINAL_DOTFILES_TEMP_DIR" ]]; then
+        export DOTFILES_TEMP_DIR="$ORIGINAL_DOTFILES_TEMP_DIR"
+    else
+        unset DOTFILES_TEMP_DIR
+    fi
+    if [[ -n "$ORIGINAL_DOTFILES_BACKUP_DIR" ]]; then
+        export DOTFILES_BACKUP_DIR="$ORIGINAL_DOTFILES_BACKUP_DIR"
+    else
+        unset DOTFILES_BACKUP_DIR
+    fi
+
+    # Clean up test directories
+    [[ -d "$TEST_ROOT" ]] && rm -rf "$TEST_ROOT"
 }
 
 # =============================================================================

@@ -36,7 +36,7 @@ check_all_conflicts() {
         if [[ -d "$pkg_dir" ]]; then
             while IFS= read -r conflict; do
                 [[ -n "$conflict" ]] && all_conflicts+=("$pkg:$conflict")
-            done < <(get_package_conflicts "$pkg_dir" "$HOME")
+            done < <(get_package_conflicts "$pkg_dir" "$DOTFILES_HOME")
         fi
     done
 
@@ -104,7 +104,7 @@ check_all_conflicts() {
 # Usage: remove_conflict "/path/to/conflict"
 remove_conflict() {
     local path="$1"
-    local short_path="${path#"$HOME/"}"
+    local short_path="${path#"$DOTFILES_HOME/"}"
 
     if [[ -e "$path" || -L "$path" ]]; then
         log_step "Removing conflict: ~/$short_path"
@@ -166,6 +166,6 @@ handle_conflicts() {
 
             remove_conflict "$path"
             removed_paths+=("$path")
-        done < <(get_package_conflicts "$pkg_dir" "$HOME")
+        done < <(get_package_conflicts "$pkg_dir" "$DOTFILES_HOME")
     done
 }
