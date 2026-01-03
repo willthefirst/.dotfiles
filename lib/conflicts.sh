@@ -194,10 +194,10 @@ check_all_conflicts() {
         echo -e "${YELLOW}How to resolve:${NC}"
         echo ""
         echo "  Option 1: Remove conflicting symlinks/files automatically"
-        echo -e "    ${GREEN}make install-force${NC}"
+        echo -e "    ${GREEN}make configure-force${NC}"
         echo ""
         echo "  Option 2: Adopt existing files into stow (keeps current content)"
-        echo -e "    ${GREEN}make install-adopt${NC}"
+        echo -e "    ${GREEN}make configure-adopt${NC}"
         echo ""
         echo "  Option 3: Remove manually, then re-run:"
         for conflict in "${all_conflicts[@]}"; do
@@ -206,7 +206,7 @@ check_all_conflicts() {
             path="${path%%:*}"
             echo "    rm \"$path\""
         done
-        echo "    make install"
+        echo "    make configure"
         echo "-------------------------------------------------------------------"
         echo ""
 

@@ -25,7 +25,7 @@ Use `--force` to remove conflicts, or `--adopt` to keep existing file contents.
 ## Usage
 
 ```bash
-make install        # Install dotfiles
+make configure      # Configure dotfiles (symlinks)
 make uninstall      # Remove symlinks
 make test           # Run tests
 make validate       # Check config syntax
