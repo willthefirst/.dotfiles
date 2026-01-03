@@ -113,9 +113,13 @@ main() {
   # Stow workflow
   log_section "Configuring dotfiles..."
   check_prerequisites
-  create_backup "${BACKUP_FILES[@]}"
+  if $FORCE_MODE; then
+    create_backup --skip "${BACKUP_FILES[@]}"
+  else
+    create_backup "${BACKUP_FILES[@]}"
+  fi
   create_directories
-  deploy_base
+  deploy_base "$FORCE_MODE" "$ADOPT_MODE"
   verify_installation
   print_next_steps
 }

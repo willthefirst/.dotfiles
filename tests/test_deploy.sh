@@ -49,7 +49,7 @@ test_deploy_packages_creates_symlinks() {
     mkdir -p "$TEST_DOTFILES/zsh"
     echo "# test zshrc" > "$TEST_DOTFILES/zsh/.zshrc"
 
-    deploy_packages "$TEST_DOTFILES" "zsh" > /dev/null 2>&1 || return 1
+    deploy_packages "$TEST_DOTFILES" "false" "zsh" > /dev/null 2>&1 || return 1
     assert "Expected .zshrc symlink" test -L "$TEST_HOME/.zshrc"
 }
 
@@ -75,13 +75,13 @@ test_deploy_packages_handles_nested_config() {
     mkdir -p "$TEST_DOTFILES/ghostty/.config/ghostty"
     echo "# test ghostty config" > "$TEST_DOTFILES/ghostty/.config/ghostty/config"
 
-    deploy_packages "$TEST_DOTFILES" "ghostty" > /dev/null 2>&1 || return 1
+    deploy_packages "$TEST_DOTFILES" "false" "ghostty" > /dev/null 2>&1 || return 1
     assert "Expected .config/ghostty/config symlink" test -L "$TEST_HOME/.config/ghostty/config"
 }
 
 test_deploy_packages_warns_on_missing_package() {
     local output
-    output=$(deploy_packages "$TEST_DOTFILES" "nonexistent" 2>&1)
+    output=$(deploy_packages "$TEST_DOTFILES" "false" "nonexistent" 2>&1)
     assert_contains "$output" "Package not found"
 }
 
@@ -89,7 +89,7 @@ test_deploy_packages_detects_file_instead_of_directory() {
     echo "# misconfigured" > "$TEST_DOTFILES/ghostty-config"
 
     local output
-    output=$(deploy_packages "$TEST_DOTFILES" "ghostty-config" 2>&1)
+    output=$(deploy_packages "$TEST_DOTFILES" "false" "ghostty-config" 2>&1)
     assert_contains "$output" "Package not found"
 }
 
@@ -102,7 +102,7 @@ test_config_has_content() {
 # All options are commented out
 EOF
 
-    deploy_packages "$TEST_DOTFILES" "ghostty" > /dev/null 2>&1
+    deploy_packages "$TEST_DOTFILES" "false" "ghostty" > /dev/null 2>&1
 
     local content_lines
     content_lines=$(grep -v '^#' "$TEST_HOME/.config/ghostty/config" | grep -cv '^[[:space:]]*$')

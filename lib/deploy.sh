@@ -31,16 +31,20 @@ check_prerequisites() {
 }
 
 # Deploy packages using stow
-# Usage: deploy_packages base_dir package1 package2 ...
+# Usage: deploy_packages base_dir adopt_mode package1 package2 ...
+# Parameters:
+#   base_dir    - directory containing stow packages
+#   adopt_mode  - "true" to adopt existing files into stow
 deploy_packages() {
     local base_dir="$1"
-    shift
+    local adopt_mode="$2"
+    shift 2
     local packages=("$@")
     local stow_opts=(-v -t "$HOME" --no-folding --ignore='deps.*' --ignore='install\.sh')
     local stowed_pkgs=()
     local missing_pkgs=()
 
-    if [[ "${ADOPT_MODE:-false}" == "true" ]]; then
+    if [[ "$adopt_mode" == "true" ]]; then
         stow_opts+=(--adopt)
         log_step "Adopt mode enabled"
     fi
@@ -74,7 +78,14 @@ deploy_packages() {
 }
 
 # Deploy base dotfiles
+# Usage: deploy_base [force_mode] [adopt_mode]
+# Parameters:
+#   force_mode  - "true" to remove conflicts before stowing
+#   adopt_mode  - "true" to adopt existing files into stow
 deploy_base() {
+    local force_mode="${1:-false}"
+    local adopt_mode="${2:-false}"
+
     if [[ ! -d "$DOTFILES_DIR" ]]; then
         log_error "Cannot access $DOTFILES_DIR"
         exit 1
@@ -82,19 +93,19 @@ deploy_base() {
 
     # Check for conflicts first (unless in force/adopt mode)
     # shellcheck disable=SC2153
-    if [[ "${FORCE_MODE:-false}" != "true" && "${ADOPT_MODE:-false}" != "true" ]]; then
+    if [[ "$force_mode" != "true" && "$adopt_mode" != "true" ]]; then
         if ! check_all_conflicts "$DOTFILES_DIR" "${PACKAGES[@]}"; then
             exit 1
         fi
     fi
 
     # Handle conflicts if in force mode
-    if [[ "${FORCE_MODE:-false}" == "true" ]]; then
-        handle_conflicts "$DOTFILES_DIR" "${PACKAGES[@]}"
+    if [[ "$force_mode" == "true" ]]; then
+        handle_conflicts --force "$DOTFILES_DIR" "${PACKAGES[@]}"
     fi
 
     # Deploy packages
-    if ! deploy_packages "$DOTFILES_DIR" "${PACKAGES[@]}"; then
+    if ! deploy_packages "$DOTFILES_DIR" "$adopt_mode" "${PACKAGES[@]}"; then
         exit 1
     fi
 }

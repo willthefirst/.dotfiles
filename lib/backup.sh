@@ -22,8 +22,16 @@ needs_backup() {
 }
 
 # Create timestamped backup of specified files
-# Usage: create_backup file1 file2 ...
+# Usage: create_backup [--skip] file1 file2 ...
+# Options:
+#   --skip    Skip backup (used with --force mode)
 create_backup() {
+    local skip_backup=false
+    if [[ "${1:-}" == "--skip" ]]; then
+        skip_backup=true
+        shift
+    fi
+
     local files=("$@")
     local backup_dir
     backup_dir="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
@@ -32,7 +40,7 @@ create_backup() {
         return 0
     fi
 
-    if [[ "${FORCE_MODE:-false}" == "true" ]]; then
+    if $skip_backup; then
         return 0
     fi
 

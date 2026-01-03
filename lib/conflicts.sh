@@ -272,15 +272,24 @@ is_under_removed_path() {
     return 1
 }
 
-# Handle conflicts based on mode (--force)
-# Requires FORCE_MODE to be set
+# Handle conflicts by removing conflicting files
+# Usage: handle_conflicts [--force] base_dir package1 package2 ...
+# Options:
+#   --force  Actually remove conflicts (required, acts as safety check)
 handle_conflicts() {
+    local force_mode=false
+    if [[ "${1:-}" == "--force" ]]; then
+        force_mode=true
+        shift
+    fi
+
     local base_dir="$1"
     shift
     local packages=("$@")
     local removed_paths=()
 
-    [[ "${FORCE_MODE:-false}" != "true" ]] && return
+    # Safety: only proceed if --force was explicitly passed
+    $force_mode || return 0
 
     for pkg in "${packages[@]}"; do
         local pkg_dir="$base_dir/$pkg"
